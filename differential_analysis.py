@@ -3,7 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 from components.data_loader import carica_dati  # Importa la funzione di caricamento dati
-from volcano_plot import mostra_volcano_plot  # Importa la funzione per il Volcano Plot
+from volcano_plot_app import mostra_volcano_plot  # Importa la funzione per il Volcano Plot
 from table_display import mostra_tabella  # Importa la funzione per mostrare la tabella
 
 # Configurazione della pagina
