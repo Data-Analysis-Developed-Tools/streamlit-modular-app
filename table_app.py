@@ -1,5 +1,4 @@
 import streamlit as st
-import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
@@ -7,12 +6,22 @@ import matplotlib.colors as mcolors
 import sys
 import os
 
-sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+# Aggiunta del percorso per garantire l'importazione corretta dei moduli personalizzati
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "components")))
 
-from components.data_loader import carica_dati  # Importiamo la funzione di caricamento dati
+from data_loader import carica_dati  # Importiamo la funzione di caricamento dati
+from volcano_plot import mostra_volcano_plot  # Importa la funzione per generare il Volcano Plot
 
 def mostra_tabella(dati, class_1, class_2):
-    print(f"Mostrando la tabella per {class_1} vs {class_2}")
+    """
+    Funzione per filtrare e mostrare la tabella con Streamlit.
+    """
+    if dati is not None:
+        st.subheader(f"Tabella Dati: {class_1} vs {class_2}")
+        dati_filtrati = dati[(dati['Classe'] == class_1) | (dati['Classe'] == class_2)]
+        st.dataframe(dati_filtrati)  # Mostra la tabella filtrata
+    else:
+        st.error("⚠️ Nessun dato disponibile per la visualizzazione.")
 
 # Configurazione della pagina
 st.set_page_config(page_title="Volcano Plot e Tabella", layout="wide")
@@ -21,28 +30,4 @@ st.set_page_config(page_title="Volcano Plot e Tabella", layout="wide")
 st.sidebar.title("Navigazione")
 selezione = st.sidebar.radio("Scegli una sezione:", ["Volcano Plot", "Tabella Dati"])
 
-# **Caricamento del file**
-file = st.sidebar.file_uploader("Carica il file Excel", type=['xlsx'])
-
-if file is not None:
-    # **Carica i dati e ottieni le classi**
-    dati, classi = carica_dati(file)
-
-    if dati is not None and len(classi) > 1:
-        # **Selezione delle classi da confrontare senza valori di default**
-        st.sidebar.subheader("Seleziona le classi da confrontare:")
-        class_1 = st.sidebar.selectbox("Classe 1", [""] + list(classi))
-        class_2 = st.sidebar.selectbox("Classe 2", [""] + list(classi))
-
-        # **Controllo se le classi sono state selezionate prima di procedere**
-        if class_1 and class_2 and class_1 != class_2:
-            if selezione == "Volcano Plot":
-                mostra_volcano_plot(file, class_1, class_2)
-            elif selezione == "Tabella Dati":
-                mostra_tabella(file, class_1, class_2)
-        else:
-            st.warning("⚠️ Seleziona due classi valide per procedere.")
-    else:
-        st.error("⚠️ Il file caricato non contiene abbastanza classi per il confronto.")
-else:
-    st.warning("⚠️ Carica un file Excel per iniziare.")
+# **Caric
