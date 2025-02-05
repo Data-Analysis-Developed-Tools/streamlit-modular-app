@@ -8,9 +8,10 @@ sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 
 from components.data_loader import carica_dati, prepara_dati
 
-def mostra_volcano_plot():
-    st.title("Volcano Plot Interattivo")
-    file = st.file_uploader("Carica il file Excel", type=['xlsx'])
+def mostra_volcano_plot(file, class_1, class_2):
+    st.write("📊 Volcano Plot: Funzione eseguita!")
+    st.write(f"Classe selezionata 1: {class_1}")
+    st.write(f"Classe selezionata 2: {class_2}")
 
     if file is not None:
         dati, classi = carica_dati(file)
