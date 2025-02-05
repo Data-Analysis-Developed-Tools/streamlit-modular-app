@@ -9,9 +9,10 @@ import os
 
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 
-from table_app import mostra_tabella  # Ora dovrebbe funzionare
-
 from components.data_loader import carica_dati  # Importiamo la funzione di caricamento dati
+
+def mostra_tabella(dati, class_1, class_2):
+    print(f"Mostrando la tabella per {class_1} vs {class_2}")
 
 # Configurazione della pagina
 st.set_page_config(page_title="Volcano Plot e Tabella", layout="wide")
