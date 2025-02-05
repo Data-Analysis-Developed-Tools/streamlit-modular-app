@@ -4,6 +4,13 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 
+import sys
+import os
+
+sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+
+from table_app import mostra_tabella  # Ora dovrebbe funzionare
+
 from components.data_loader import carica_dati  # Importiamo la funzione di caricamento dati
 
 # Configurazione della pagina
