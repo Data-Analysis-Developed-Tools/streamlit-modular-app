@@ -7,7 +7,7 @@ import os
 
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 
-from volcano_plot import mostra_volcano_plot  # Ora dovrebbe funzionare
+from volcano_plot_app import mostra_volcano_plot  # Ora dovrebbe funzionare
 
 
 from components.data_loader import carica_dati  # Importa la funzione di caricamento dati
