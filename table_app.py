@@ -16,12 +16,12 @@ def mostra_tabella(dati, class_1, class_2):
     # Controlla i nomi delle colonne disponibili
     st.write("Colonne disponibili nel DataFrame:", dati.columns.tolist())
 
-    # Verifica se la colonna 'Classe' esiste
+    # Verifica se la colonna 'Classe' esiste o se ha un nome simile
     colonna_classe = "Classe"
     if colonna_classe not in dati.columns:
-        colonna_classe = [col for col in dati.columns if "class" in col.lower()]
+        colonna_classe = [str(col).lower() for col in dati.columns if "class" in str(col).lower()]
         if colonna_classe:
-            colonna_classe = colonna_classe[0]  # Usa il primo match
+            colonna_classe = colonna_classe[0]  # Usa il primo match trovato
         else:
             st.error("⚠️ Nessuna colonna corrispondente a 'Classe' trovata nel dataset.")
             return
@@ -37,12 +37,3 @@ def mostra_tabella(dati, class_1, class_2):
         colormap = plt.cm.coolwarm
         
         st.dataframe(dati_filtrati.style.applymap(
-            lambda x: f'background-color: {mcolors.to_hex(colormap(norm(x)))}',
-            subset=['-log10(p-value) x Log2FoldChange']
-        ))
-        
-        # Download della tabella in formato CSV
-        csv = dati_filtrati.to_csv(index=False).encode('utf-8')
-        st.download_button(label="📥 Scarica tabella CSV", data=csv, file_name="dati_volcano_plot.csv", mime='text/csv')
-    else:
-        st.error("⚠️ La colonna '-log10(p-value) x Log2FoldChange' non è presente nei dati!")
