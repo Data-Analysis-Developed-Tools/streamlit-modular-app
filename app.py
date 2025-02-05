@@ -3,11 +3,6 @@ from volcano_plot_app import mostra_volcano_plot
 from table_app import mostra_tabella
 from components.data_loader import carica_dati  # Importiamo la funzione di caricamento dati
 
-git add app.py
-git commit -m "Fix selezione classi senza default nei menu a tendina"
-git push origin main
-
-
 # Configurazione della pagina
 st.set_page_config(page_title="Volcano Plot e Tabella", layout="wide")
 
