@@ -3,6 +3,7 @@ pandas
 numpy
 scipy
 openpyxl
+matplotlib
 plotly
 kaleido
 xlsxwriter
