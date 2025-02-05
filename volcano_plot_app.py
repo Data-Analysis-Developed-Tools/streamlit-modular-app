@@ -2,6 +2,10 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+
 from components.data_loader import carica_dati, prepara_dati
 
 def mostra_volcano_plot():
