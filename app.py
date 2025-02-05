@@ -1,39 +1,32 @@
 import streamlit as st
 import pandas as pd
-import matplotlib.pyplot as plt
-import matplotlib.colors as mcolors
-from components.data_loader import carica_dati, prepara_dati
+from volcano_plot_app import mostra_volcano_plot
+from table_app import mostra_tabella
+from components.data_loader import carica_dati  # Importa la funzione di caricamento dati
 
-def mostra_tabella(file, class_1, class_2):
-    st.title("Tabella dei Dati")
+# Configurazione della pagina
+st.set_page_config(page_title="Volcano Plot e Tabella", layout="wide")
 
-    if file is not None:
-        dati, classi = carica_dati(file)  # Carica il dataset
-        
-        if dati is not None:
-            # **Filtra solo le due classi selezionate**
-            dati_filtrati = dati.loc[:, dati.columns.get_level_values(1).isin([class_1, class_2])]
+# Barra laterale di navigazione
+st.sidebar.title("Navigazione")
+selezione = st.sidebar.radio("Scegli una sezione:", ["Volcano Plot", "Tabella Dati"])
 
-            # Prepara i dati con le classi selezionate
-            dati_preparati = prepara_dati(dati_filtrati, [class_1, class_2], 0.0, 0.05)
+# Caricamento del file
+file = st.sidebar.file_uploader("Carica il file Excel", type=['xlsx'])
 
-            if dati_preparati is not None and not dati_preparati.empty:
-                st.write("Dati visibili attualmente nel grafico:")
-                norm = mcolors.TwoSlopeNorm(vmin=dati_preparati['-log10(p-value) x Log2FoldChange'].min(),
-                                            vcenter=0,
-                                            vmax=dati_preparati['-log10(p-value) x Log2FoldChange'].max())
-                colormap = plt.cm.coolwarm
-                st.dataframe(dati_preparati.style.applymap(
-                    lambda x: f'background-color: {mcolors.to_hex(colormap(norm(x)))}',
-                    subset=['-log10(p-value) x Log2FoldChange']
-                ))
+if file is not None:
+    dati, classi = carica_dati(file)  # Carica il dataset e ottieni le classi uniche
+    if dati is not None:
+        # **Menu a tendina per selezionare le due classi**
+        st.sidebar.subheader("Seleziona le classi da confrontare:")
+        class_1 = st.sidebar.selectbox("Classe 1", classi, index=0)
+        class_2 = st.sidebar.selectbox("Classe 2", classi, index=1)
 
-                # Download della tabella in formato CSV
-                csv = dati_preparati.to_csv(index=False).encode('utf-8')
-                st.download_button(label="📥 Scarica tabella CSV", data=csv, file_name="dati_volcano_plot.csv", mime='text/csv')
-            else:
-                st.error("⚠️ Nessun dato preparato per la tabella!")
-        else:
-            st.error("Dati non caricati correttamente.")
-    else:
-        st.warning("Carica un file Excel.")
+        # Mostra la sezione selezionata, passando le classi selezionate
+        if selezione == "Volcano Plot":
+            mostra_volcano_plot(file, class_1, class_2)
+        elif selezione == "Tabella Dati":
+            mostra_tabella(file, class_1, class_2)
+
+else:
+    st.warning("⚠️ Carica un file Excel per iniziare.")
