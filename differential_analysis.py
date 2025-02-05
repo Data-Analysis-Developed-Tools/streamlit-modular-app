@@ -3,7 +3,6 @@ import os
 
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))  # Aggiunge la directory corrente ai percorsi di ricerca
 
-from table_app import mostra_tabella
 import streamlit as st
 from volcano_plot_app import mostra_volcano_plot
 from table_app import mostra_tabella
