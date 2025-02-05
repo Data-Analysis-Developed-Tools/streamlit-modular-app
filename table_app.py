@@ -1,5 +1,5 @@
 import streamlit as st
-from volcano_plot_app import mostra_volcano_plot
+from app import mostra_volcano_plot
 
 import streamlit as st
 import pandas as pd
