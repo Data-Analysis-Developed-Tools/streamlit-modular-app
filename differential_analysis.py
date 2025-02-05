@@ -6,7 +6,7 @@ sys.path.append(os.path.abspath(os.path.dirname(__file__)))  # Aggiunge la direc
 import streamlit as st
    
 from volcano_plot_app import mostra_volcano_plot
-from table_app.py import mostra_tabella
+from table_app import mostra_tabella
 
 # Configurazione della pagina
 st.set_page_config(page_title="Volcano Plot e Tabella", layout="wide")
