@@ -1,14 +1,15 @@
 import sys
 import os
-
-sys.path.append(os.path.abspath(os.path.dirname(__file__)))
-
-from table_app import mostra_tabella
-
+import sys
+import os
 import streamlit as st
 from volcano_plot_app import mostra_volcano_plot
 from table_app import mostra_tabella
 from components.data_loader import carica_dati  # Importiamo la funzione di caricamento dati
+
+sys.path.append(os.path.abspath(os.path.dirname(__file__)))  # Forza Python a cercare i moduli nel percorso attuale
+
+from table_app import mostra_tabella
 
 # Configurazione della pagina
 st.set_page_config(page_title="Volcano Plot e Tabella", layout="wide")
