@@ -3,11 +3,9 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from components.data_loader import carica_dati, prepara_dati
-
 def mostra_volcano_plot():
     st.title("Volcano Plot Interattivo")
     file = st.file_uploader("Carica il file Excel", type=['xlsx'])
-
     if file is not None:
         dati, classi = carica_dati(file)
         if dati is not None:
@@ -17,7 +15,6 @@ def mostra_volcano_plot():
             size_by_media = st.checkbox("Dimensiona punti per media valori", value=False)
             color_by_media = st.checkbox("Colora punti per media valori", value=False)
             dati_preparati = prepara_dati(dati, classi, fold_change_threshold, p_value_threshold)
-
             if dati_preparati is not None and not dati_preparati.empty:
                 fig = px.scatter(dati_preparati, x='Log2FoldChange', y='-log10(p-value)', text='Variabile' if show_labels else None,
                                  hover_data=['Variabile'], color=dati_preparati['MediaLog'] if color_by_media else None,
@@ -28,7 +25,6 @@ def mostra_volcano_plot():
                                    text=f"Over-expression in {classi[1]}", showarrow=False, font=dict(color="red", size=16), xanchor='left')
                 fig.add_annotation(x=dati_preparati['Log2FoldChange'].max(), y=dati_preparati['-log10(p-value)'].max()*1.05,
                                    text=f"Over-expression in {classi[0]}", showarrow=False, font=dict(color="green", size=16), xanchor='right')
-
                 st.plotly_chart(fig)
             else:
                 st.error("⚠️ Il dataframe 'dati_preparati' è vuoto!")
