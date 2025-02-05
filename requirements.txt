@@ -1,0 +1,10 @@
+streamlit
+pandas
+numpy
+scipy
+openpyxl
+plotly
+kaleido
+xlsxwriter
+seaborn
+setuptools
