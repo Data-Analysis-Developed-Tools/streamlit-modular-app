@@ -1,46 +1,46 @@
 import streamlit as st
 import pandas as pd
-import matplotlib.pyplot as plt
+from components.data_loader import carica_dati, prepara_dati
+from table_app import mostra_tabella
+from volcano_plot_app import mostra_volcano_plot
 
-import sys
-import os
+# Configurazione della pagina Streamlit
+st.set_page_config(page_title="Analisi Dati - Volcano Plot e Tabella", layout="wide")
 
-sys.path.append(os.path.abspath(os.path.dirname(__file__)))
-
-from volcano_plot_app import mostra_volcano_plot  # Ora dovrebbe funzionare
-
-
-from components.data_loader import carica_dati  # Importa la funzione di caricamento dati
-from volcano_plot_app import mostra_volcano_plot  # Importa la funzione per il Volcano Plot
-from table_app import mostra_tabella  # Importa la funzione per mostrare la tabella
-
-# Configurazione della pagina
-st.set_page_config(page_title="Volcano Plot e Tabella", layout="wide")
-
-# Barra laterale di navigazione
-st.sidebar.title("Navigazione")
-selezione = st.sidebar.radio("Scegli una sezione:", ["Volcano Plot", "Tabella Dati"])
-
-# **Caricamento del file**
+# Sidebar - Caricamento file
+st.sidebar.title("Caricamento dati")
 file = st.sidebar.file_uploader("Carica il file Excel", type=['xlsx'])
 
 if file is not None:
-    # **Carica i dati e ottieni le classi**
+    # Carica i dati
     dati, classi = carica_dati(file)
 
     if dati is not None and len(classi) > 1:
-        # **Selezione delle classi da confrontare**
+        # Sidebar - Selezione delle classi
         st.sidebar.subheader("Seleziona le classi da confrontare:")
         class_1 = st.sidebar.selectbox("Classe 1", classi)
         class_2 = st.sidebar.selectbox("Classe 2", classi)
 
-        # **Bottone per avviare l'analisi**
+        # Sidebar - Parametri Volcano Plot
+        fold_change_threshold = st.sidebar.number_input('Soglia Log2FoldChange', value=1.0)
+        p_value_threshold = st.sidebar.number_input('Soglia -log10(p-value)', value=0.05)
+
+        # Bottone "Procedi"
         if st.sidebar.button("Procedi"):
             if class_1 and class_2 and class_1 != class_2:
+                # Filtrare i dati solo per le classi selezionate
+                dati_filtrati = dati.loc[:, dati.columns.get_level_values(1).isin([class_1, class_2])]
+
+                # Prepara i dati per l'analisi
+                dati_preparati = prepara_dati(dati_filtrati, [class_1, class_2], fold_change_threshold, p_value_threshold)
+
+                # Selezione della vista
+                selezione = st.sidebar.radio("Scegli una sezione:", ["Volcano Plot", "Tabella Dati"])
+
                 if selezione == "Volcano Plot":
-                    mostra_volcano_plot(dati, class_1, class_2)
+                    mostra_volcano_plot(dati_preparati, class_1, class_2)
                 elif selezione == "Tabella Dati":
-                    mostra_tabella(dati, class_1, class_2)
+                    mostra_tabella(dati_preparati, class_1, class_2)
             else:
                 st.warning("⚠️ Seleziona due classi valide per procedere.")
     else:
