@@ -1,8 +1,4 @@
 import streamlit as st
-
-st.title("✅ L'app è stata caricata con successo!")
-
-import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
