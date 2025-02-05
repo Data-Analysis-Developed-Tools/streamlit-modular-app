@@ -2,7 +2,12 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+
 from components.data_loader import carica_dati, prepara_dati
+
 
 def mostra_tabella():
     st.title("Tabella dei Dati")
