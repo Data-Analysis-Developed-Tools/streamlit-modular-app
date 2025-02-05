@@ -2,6 +2,14 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+
+import sys
+import os
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "components")))
+
+from data_loader import carica_dati, prepara_dati
+
 from components.data_loader import carica_dati, prepara_dati
 def mostra_volcano_plot():
     st.title("Volcano Plot Interattivo")
