@@ -1,6 +1,12 @@
 import streamlit as st
 from volcano_plot_app import mostra_volcano_plot
-from table_app import mostra_tabella
+
+import streamlit as st
+import pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
+from components.data_loader import carica_dati, prepara_dati  # Importa solo i moduli necessari
+
 from components.data_loader import carica_dati  # Importiamo la funzione di caricamento dati
 
 # Configurazione della pagina
