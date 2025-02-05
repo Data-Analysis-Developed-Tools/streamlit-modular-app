@@ -1,6 +1,4 @@
 import streamlit as st
-from app import mostra_volcano_plot
-
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
