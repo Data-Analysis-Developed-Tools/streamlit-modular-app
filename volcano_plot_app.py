@@ -43,7 +43,12 @@ def mostra_volcano_plot():
         st.error("⚠️ Il dataframe 'dati_preparati' è vuoto! Controlla i parametri di filtraggio.")
         return
 
-    # Generazione del Volcano Plot
+    # Determina i limiti della scala in base ai dati filtrati
+    x_min = min(dati_preparati['Log2FoldChange'].min(), -fold_change_threshold * 1.2)
+    x_max = max(dati_preparati['Log2FoldChange'].max(), fold_change_threshold * 1.2)
+    y_max = max(dati_preparati['-log10(p-value)'].max(), p_value_threshold * 1.2)
+
+    # Generazione del Volcano Plot con scala dinamica
     try:
         fig = px.scatter(dati_preparati, x='Log2FoldChange', y='-log10(p-value)', 
                          text='Variabile' if show_labels else None,
@@ -52,19 +57,23 @@ def mostra_volcano_plot():
                          size=dati_preparati['MediaLog'] if size_by_media else None,
                          color_continuous_scale='RdYlBu_r', size_max=50)
 
-        fig.add_trace(go.Scatter(x=[0, 0], 
-                                 y=[0, dati_preparati['-log10(p-value)'].max()], 
-                                 mode='lines', line=dict(color='orange', width=2)))
+        fig.update_layout(xaxis=dict(range=[x_min, x_max]), 
+                          yaxis=dict(range=[0, y_max]))
 
-        fig.add_annotation(x=dati_preparati['Log2FoldChange'].min(), 
-                           y=dati_preparati['-log10(p-value)'].max()*1.05,
-                           text=f"Over-expression in {classi[1]}", 
-                           showarrow=False, font=dict(color="red", size=16), xanchor='left')
+        fig.add_trace(go.Scatter(x=[-fold_change_threshold, -fold_change_threshold], 
+                                 y=[0, y_max], 
+                                 mode='lines', line=dict(color='red', dash='dash', width=2),
+                                 name=f"-Log2FC soglia ({-fold_change_threshold})"))
 
-        fig.add_annotation(x=dati_preparati['Log2FoldChange'].max(), 
-                           y=dati_preparati['-log10(p-value)'].max()*1.05,
-                           text=f"Over-expression in {classi[0]}", 
-                           showarrow=False, font=dict(color="green", size=16), xanchor='right')
+        fig.add_trace(go.Scatter(x=[fold_change_threshold, fold_change_threshold], 
+                                 y=[0, y_max], 
+                                 mode='lines', line=dict(color='red', dash='dash', width=2),
+                                 name=f"+Log2FC soglia ({fold_change_threshold})"))
+
+        fig.add_trace(go.Scatter(x=[x_min, x_max], 
+                                 y=[p_value_threshold, p_value_threshold], 
+                                 mode='lines', line=dict(color='blue', dash='dash', width=2),
+                                 name=f"Soglia -log10(p-value) ({p_value_threshold})"))
 
         st.plotly_chart(fig)
         st.write("✅ Volcano Plot generato con successo!")
