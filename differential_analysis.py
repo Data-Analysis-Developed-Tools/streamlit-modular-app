@@ -11,8 +11,8 @@ st.sidebar.title("📂 Caricamento Dati")
 file = st.sidebar.file_uploader("Carica il file Excel", type=['xlsx'])
 
 if file is not None:
-    # Carica i dati
-    dati, classi = carica_dati(file)
+    # Carica i dati senza passare il file come argomento
+    dati, classi = carica_dati()
 
     if dati is not None and len(classi) > 1:
         # Sidebar - Selezione delle classi
