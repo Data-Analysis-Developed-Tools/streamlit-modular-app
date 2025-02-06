@@ -43,5 +43,17 @@ def mostra_tabella():
     colonne_tabella = ["Variabile", "Log2FoldChange", "-log10(p-value)", "p-value", "Prodotto"]
     tabella_finale = dati_preparati[colonne_tabella]
 
+    # **Formattazione condizionale della colonna "Prodotto"**
+    def color_format(val):
+        if val < 0:
+            return f'background-color: rgba(0, 0, 255, {abs(val) / max(abs(tabella_finale["Prodotto"]))})'  # Blu per negativi
+        elif val > 0:
+            return f'background-color: rgba(255, 0, 0, {val / max(tabella_finale["Prodotto"])})'  # Rosso per positivi
+        else:
+            return 'background-color: white'  # Bianco per valori vicini a zero
+
+    # **Applica la formattazione condizionale**
+    styled_table = tabella_finale.style.applymap(color_format, subset=["Prodotto"])
+
     # **Mostra la tabella**
-    st.dataframe(tabella_finale, use_container_width=True)
+    st.dataframe(styled_table, use_container_width=True)
