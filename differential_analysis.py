@@ -2,15 +2,15 @@ import streamlit as st
 from volcano_plot_app import mostra_volcano_plot
 from table_app import mostra_tabella
 
-# Configurazione della pagina
-st.set_page_config(page_title="Volcano Plot e Tabella", layout="wide")
+# Configurazione della pagina Streamlit
+st.set_page_config(page_title="Analisi Dati - Volcano Plot e Tabella", layout="wide")
 
-# Barra di navigazione
+# Sidebar per la selezione della modalità
 st.sidebar.title("Navigazione")
-selezione = st.sidebar.radio("Scegli una sezione:", ["Volcano Plot", "Tabella Dati"])
+sezione = st.sidebar.radio("Scegli una sezione:", ["Volcano Plot", "Tabella Dati"])
 
 # Mostra la sezione selezionata
-if selezione == "Volcano Plot":
+if sezione == "Volcano Plot":
     mostra_volcano_plot()
-elif selezione == "Tabella Dati":
+elif sezione == "Tabella Dati":
     mostra_tabella()
