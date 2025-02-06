@@ -1,19 +1,14 @@
 import pandas as pd
 import streamlit as st
 import numpy as np
-import io
 from scipy.stats import ttest_ind
 
-# Funzione per caricare i dati
-def carica_dati(uploaded_file):
-    try:
-        if uploaded_file is not None:
-            # Legge direttamente il file senza bisogno di salvarlo su disco
-            dati = pd.read_excel(uploaded_file, header=[0, 1], index_col=0, engine='openpyxl')
-            classi = dati.columns.get_level_values(1).unique()
-            return dati, classi
-    except Exception as e:
-        st.error(f"Errore nel caricamento del file: {str(e)}")
+# Funzione per caricare i dati filtrati dalla sessione di Streamlit
+def carica_dati():
+    if "dati_filtrati" in st.session_state:
+        return st.session_state["dati_filtrati"], [st.session_state["class_1"], st.session_state["class_2"]]
+    else:
+        st.error("⚠️ Nessun dato filtrato disponibile. Carica un file e conferma la selezione delle classi.")
         return None, None
 
 # Funzione per calcolare la media logaritmica
@@ -24,7 +19,7 @@ def calcola_media_log(dati):
 # Funzione per preparare i dati per il Volcano Plot
 def prepara_dati(dati, classi, fold_change_threshold, p_value_threshold):
     if dati is not None:
-        media_log = calcola_media_log(dati.iloc[:, 1:])
+        media_log = calcola_media_log(dati.iloc[:, :])
         risultati = []
         for var in dati.index:
             valori = [dati.loc[var, dati.columns.get_level_values(1) == classe].dropna().values for classe in classi]
