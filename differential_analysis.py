@@ -2,6 +2,12 @@ import streamlit as st
 
 from components.data_loader import carica_dati
 
+try:
+    from volcano_plot_app import mostra_volcano_plot
+    st.write("✅ Importazione di mostra_volcano_plot avvenuta con successo.")
+except Exception as e:
+    st.error(f"❌ Errore nell'import di mostra_volcano_plot: {e}")
+
 # Configurazione della pagina Streamlit
 st.set_page_config(page_title="Analisi Dati - Volcano Plot e Tabella", layout="wide")
 
