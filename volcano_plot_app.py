@@ -54,7 +54,7 @@ def mostra_volcano_plot():
     if size_by_media and n_base is not None:
         dati_preparati["SizeScaled"] = np.power(n_base, dati_preparati["MediaLog"])  # n^MediaLog
     else:
-        dati_preparati["SizeScaled"] = 0.0001  # ✅ Imposta un valore piccolo per avere punti simili alle etichette
+        dati_preparati["SizeScaled"] = 0.00005  # ✅ Imposta un valore piccolo per avere punti simili alle etichette
 
     # Determina i limiti della scala in base ai dati filtrati
     x_min = min(dati_preparati['Log2FoldChange'].min(), -fold_change_threshold * 1.2)
