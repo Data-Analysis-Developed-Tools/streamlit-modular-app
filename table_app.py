@@ -1,29 +1,39 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-from components.data_loader import carica_dati
+from components.data_loader import carica_dati, prepara_dati
 
 def processa_dati():
+    # Controlla se i dati filtrati esistono in session_state
     if "dati_filtrati" not in st.session_state or st.session_state["dati_filtrati"] is None:
-        return  # Se non ci sono dati filtrati, non fa nulla
+        return  # Se non ci sono dati, non fa nulla
 
     dati = st.session_state["dati_filtrati"]
     classi = [st.session_state.get("class_1"), st.session_state.get("class_2")]
 
+    # Se le classi non sono state selezionate, non fa nulla
     if None in classi:
-        return  # Se le classi non sono selezionate, non fa nulla
+        return
 
-    # **Filtra solo le colonne delle classi selezionate**
-    dati_filtrati = dati.loc[:, dati.columns.get_level_values(1).isin([class_1, class_2])]
+    # **Recuperiamo i parametri impostati nella sidebar**
+    fold_change_threshold = st.session_state.get("fold_change_threshold", 0.0)
+    p_value_threshold = st.session_state.get("p_value_threshold", 0.05)
 
-    # **Calcolo di Log2FoldChange**
-    colonne_numeriche = dati_filtrati.select_dtypes(include=[np.number]).columns
-    if len(colonne_numeriche) >= 2:
-        dati_filtrati["Log2FoldChange"] = np.log2(dati_filtrati[colonne_numeriche[0]] / dati_filtrati[colonne_numeriche[1]])
+    # **Prepara i dati**
+    try:
+        dati_preparati = prepara_dati(dati, classi, fold_change_threshold, p_value_threshold)
+    except Exception:
+        return  # Se `prepara_dati` fallisce, il modulo non esegue nulla
 
-    # **Calcolo di -log10(p-value)**
-    if "p-value" in dati_filtrati.columns:
-        dati_filtrati["-log10(p-value)"] = -np.log10(dati_filtrati["p-value"])
+    if dati_preparati is None or dati_preparati.empty:
+        return  # Se i dati risultano vuoti, non fa nulla
+
+    # **Calcolo di p-value se non è presente**
+    if "p-value" not in dati_preparati.columns and "-log10(p-value)" in dati_preparati.columns:
+        dati_preparati["p-value"] = np.power(10, -dati_preparati["-log10(p-value)"])
+
+    # **Calcolo della colonna "Prodotto"**
+    dati_preparati["Prodotto"] = dati_preparati["-log10(p-value)"] * dati_preparati["Log2FoldChange"]
 
     # **Salva i dati processati nel session_state**
-    st.session_state["dati_processati"] = dati_filtrati
+    st.session_state["dati_processati"] = dati_preparati
