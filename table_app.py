@@ -1,9 +1,10 @@
 import streamlit as st
 import pandas as pd
-import numpy as np  # ✅ Per il calcolo del p-value e Log2FoldChange
+import numpy as np  # ✅ Per calcoli matematici
+from components.data_loader import prepara_dati
 
 def mostra_tabella():
-    st.title("Tabella Dati Filtrati")
+    st.title("Tabella dei Dati Filtrati")
 
     # Controlla se i dati filtrati esistono in session_state
     if "dati_filtrati" not in st.session_state or st.session_state["dati_filtrati"] is None:
@@ -11,68 +12,43 @@ def mostra_tabella():
         return
     st.write("✅ Dati filtrati trovati in session_state.")
 
-    # Creiamo una copia dei dati per evitare modifiche indesiderate
-    dati = st.session_state["dati_filtrati"].copy()
+    dati = st.session_state["dati_filtrati"]
+    classi = [st.session_state.get("class_1"), st.session_state.get("class_2")]
 
-    # **Gestione Multi-Indice**
-    if isinstance(dati.columns, pd.MultiIndex):
-        st.write("🔍 Il dataset ha colonne Multi-Index. Le ristrutturiamo.")
-        dati.columns = ["_".join(map(str, col)).strip() for col in dati.columns.values]  # Concateniamo i livelli del MultiIndex
-
-    # **Mostra le colonne disponibili dopo la pulizia**
-    st.write("📊 Colonne disponibili dopo la ristrutturazione:", dati.columns.tolist())
-
-    # **Verifica che il dataset contenga dati validi**
-    if dati.empty:
-        st.error("⚠️ Il dataset filtrato è vuoto dopo la rimozione delle classi!")
+    # Controlla se le classi sono state selezionate
+    if None in classi:
+        st.error("⚠️ Le classi non sono state selezionate correttamente.")
         return
+    st.write(f"📊 Generazione tabella per classi: {classi}")
 
-    # **Identificazione della colonna delle variabili**
-    colonna_variabili = dati.columns[0]  # La prima colonna contiene i nomi delle variabili
-    dati.rename(columns={colonna_variabili: "Variabile"}, inplace=True)  # Rinominiamo per chiarezza
+    # Recupera i parametri impostati nella sidebar
+    default_fold_change = 0.0
+    default_p_value = 0.05
+    fold_change_threshold = st.session_state.get("fold_change_threshold", default_fold_change)
+    p_value_threshold = st.session_state.get("p_value_threshold", default_p_value)
 
-    # **Selezioniamo le colonne numeriche corrette**
-    colonne_numeriche = dati.select_dtypes(include=[np.number]).columns
-    if len(colonne_numeriche) < 2:
-        st.error("❌ Errore: Non ci sono abbastanza colonne numeriche per calcolare Log2FoldChange.")
-        return
-
-    # **Calcolo di Log2FoldChange**
+    # Prepara i dati per la tabella
     try:
-        dati["Log2FoldChange"] = np.log2(dati[colonne_numeriche[0]] / dati[colonne_numeriche[1]])
+        dati_preparati = prepara_dati(dati, classi, fold_change_threshold, p_value_threshold)
+        st.write("✅ Funzione `prepara_dati` eseguita correttamente.")
     except Exception as e:
-        st.error(f"❌ Errore nel calcolo di Log2FoldChange: {e}")
+        st.error(f"❌ Errore in `prepara_dati`: {e}")
         return
 
-    # **Se manca -log10(p-value), proviamo a calcolarlo da p-value**
-    if "-log10(p-value)" not in dati.columns:
-        if "p-value" in dati.columns:
-            try:
-                dati["-log10(p-value)"] = -np.log10(dati["p-value"])
-            except Exception as e:
-                st.error(f"❌ Errore nel calcolo di -log10(p-value): {e}")
-                return
-        else:
-            st.error("❌ Errore: Non è possibile calcolare -log10(p-value) perché manca la colonna 'p-value'.")
-            return
-
-    # **Calcolo di p-value**
-    try:
-        dati["p-value"] = np.power(10, -dati["-log10(p-value)"])
-    except Exception as e:
-        st.error(f"❌ Errore nel calcolo del p-value: {e}")
+    if dati_preparati is None or dati_preparati.empty:
+        st.error("⚠️ Il dataframe 'dati_preparati' è vuoto! Controlla i parametri di filtraggio.")
         return
+
+    # **Calcolo del p-value se non è presente**
+    if "p-value" not in dati_preparati.columns and "-log10(p-value)" in dati_preparati.columns:
+        dati_preparati["p-value"] = np.power(10, -dati_preparati["-log10(p-value)"])
 
     # **Calcolo della colonna "Prodotto"**
-    try:
-        dati["Prodotto"] = dati["-log10(p-value)"] * dati["Log2FoldChange"]
-    except Exception as e:
-        st.error(f"❌ Errore nel calcolo del Prodotto: {e}")
-        return
+    dati_preparati["Prodotto"] = dati_preparati["-log10(p-value)"] * dati_preparati["Log2FoldChange"]
 
     # **Selezione delle colonne richieste**
     colonne_finali = ["Variabile", "Log2FoldChange", "-log10(p-value)", "p-value", "Prodotto"]
-    tabella_finale = dati[colonne_finali]
+    tabella_finale = dati_preparati[colonne_finali]
 
     # **Mostra la tabella**
     st.dataframe(tabella_finale, use_container_width=True)
