@@ -1,15 +1,22 @@
 import streamlit as st
 
+# 🚀 `st.set_page_config()` deve essere la PRIMA istruzione eseguita
+st.set_page_config(page_title="Analisi Dati - Volcano Plot e Tabella", layout="wide")
+
 from components.data_loader import carica_dati
 
+# 🚀 Importiamo i moduli solo quando servono, evitando problemi
 try:
     from volcano_plot_app import mostra_volcano_plot
     st.write("✅ Importazione di mostra_volcano_plot avvenuta con successo.")
 except Exception as e:
     st.error(f"❌ Errore nell'import di mostra_volcano_plot: {e}")
 
-# Configurazione della pagina Streamlit
-st.set_page_config(page_title="Analisi Dati - Volcano Plot e Tabella", layout="wide")
+try:
+    from table_app import mostra_tabella
+    st.write("✅ Importazione di mostra_tabella avvenuta con successo.")
+except Exception as e:
+    st.error(f"❌ Errore nell'import di mostra_tabella: {e}")
 
 # Sidebar - Caricamento del file
 st.sidebar.title("📂 Caricamento Dati")
