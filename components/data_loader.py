@@ -3,12 +3,26 @@ import streamlit as st
 import numpy as np
 from scipy.stats import ttest_ind
 
-# Funzione per caricare i dati filtrati dalla sessione di Streamlit
-def carica_dati():
-    if "dati_filtrati" in st.session_state:
-        return st.session_state["dati_filtrati"], [st.session_state["class_1"], st.session_state["class_2"]]
+# Funzione per caricare i dati dal file Excel
+def carica_dati(file=None):
+    if file is not None:
+        try:
+            dati = pd.read_excel(file, header=[0, 1], index_col=0)
+            classi = dati.columns.get_level_values(1).unique()
+
+            # Memorizzare i dati nel session_state
+            st.session_state["dati_completi"] = dati
+            st.session_state["classi"] = classi
+            st.session_state["file_name"] = file.name  # Memorizza il nome del file
+
+            return dati, classi
+        except Exception as e:
+            st.error(f"Errore nel caricamento del file: {str(e)}")
+            return None, None
+    elif "dati_completi" in st.session_state:
+        return st.session_state["dati_completi"], st.session_state["classi"]
     else:
-        st.error("⚠️ Nessun dato filtrato disponibile. Carica un file e conferma la selezione delle classi.")
+        st.error("⚠️ Nessun dato disponibile. Carica un file per procedere.")
         return None, None
 
 # Funzione per calcolare la media logaritmica
@@ -29,7 +43,7 @@ def prepara_dati(dati, classi, fold_change_threshold, p_value_threshold):
                 p_val_log = -np.log10(p_val) if p_val > 0 else None
                 pval_log2fc = p_val_log * media_diff if p_val_log is not None else None
                 risultati.append([var, media_diff, p_val_log, pval_log2fc, media_log[var]])
-        
+
         risultati_df = pd.DataFrame(risultati, columns=['Variabile', 'Log2FoldChange', '-log10(p-value)', '-log10(p-value) x Log2FoldChange', 'MediaLog'])
         return risultati_df
     else:
