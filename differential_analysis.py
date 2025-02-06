@@ -1,6 +1,5 @@
 import streamlit as st
-from volcano_plot_app import mostra_volcano_plot
-from table_app import mostra_tabella
+
 from components.data_loader import carica_dati
 
 # Configurazione della pagina Streamlit
