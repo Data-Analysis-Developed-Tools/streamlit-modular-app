@@ -1,49 +1,52 @@
 import streamlit as st
-import pandas as pd
-import numpy as np
-from components.data_loader import carica_dati, prepara_dati
+from components.data_loader import carica_dati
+from volcano_plot_app import mostra_volcano_plot  # ✅ Importa solo il modulo Volcano Plot
 
-def mostra_tabella():
-    st.title("Tabella dei Dati Filtrati")
+# Sidebar - Parametri di filtraggio
+st.sidebar.subheader("⚙️ Parametri di filtraggio")
+st.session_state["fold_change_threshold"] = st.sidebar.number_input("Soglia Log2FoldChange", value=0.0)
+st.session_state["p_value_threshold"] = st.sidebar.number_input("Soglia -log10(p-value)", value=0.0)
 
-    # Controlla se i dati filtrati esistono in session_state
-    if "dati_filtrati" not in st.session_state or st.session_state["dati_filtrati"] is None:
-        st.error("⚠️ Nessun dato filtrato disponibile. Torna alla homepage e seleziona le classi.")
-        return
+# Controllo caricamento file
+file = st.sidebar.file_uploader("Carica il file Excel", type=['xlsx'])
 
-    dati = st.session_state["dati_filtrati"]
-    classi = [st.session_state.get("class_1"), st.session_state.get("class_2")]
+if file is not None:
+    if "file_name" not in st.session_state or st.session_state["file_name"] != file.name:
+        dati, classi = carica_dati(file)
+        if dati is not None and len(classi) > 1:
+            st.session_state["dati_completi"] = dati
+            st.session_state["classi"] = classi
+            st.session_state["file_name"] = file.name
+            st.session_state["dati_filtrati"] = None
+        else:
+            st.sidebar.warning("⚠️ Il file caricato non contiene abbastanza classi per l'analisi.")
+            st.stop()
 
-    # Controlla se le classi sono state selezionate
-    if None in classi:
-        st.error("⚠️ Le classi non sono state selezionate correttamente.")
-        return
+    # Sidebar - Selezione delle classi
+    if "classi" in st.session_state:
+        st.sidebar.subheader("🔍 Seleziona le classi da confrontare:")
+        class_1 = st.sidebar.selectbox("Classe 1", st.session_state["classi"], key="classe1")
+        class_2 = st.sidebar.selectbox("Classe 2", st.session_state["classi"], key="classe2")
 
-    # Recupera i parametri impostati nella sidebar
-    fold_change_threshold = st.session_state.get("fold_change_threshold", 0.0)
-    p_value_threshold = st.session_state.get("p_value_threshold", 0.05)
+        if st.sidebar.button("✅ Conferma selezione"):
+            if class_1 and class_2 and class_1 != class_2:
+                dati_filtrati = st.session_state["dati_completi"].loc[:, 
+                    st.session_state["dati_completi"].columns.get_level_values(1).isin([class_1, class_2])]
 
-    # Prepara i dati per la tabella
-    try:
-        dati_preparati = prepara_dati(dati, classi, fold_change_threshold, p_value_threshold)
-    except Exception as e:
-        st.error(f"❌ Errore in `prepara_dati`: {e}")
-        return
+                st.session_state["dati_filtrati"] = dati_filtrati
+                st.session_state["class_1"] = class_1
+                st.session_state["class_2"] = class_2
 
-    if dati_preparati is None or dati_preparati.empty:
-        st.error("⚠️ Il dataframe 'dati_preparati' è vuoto! Controlla i parametri di filtraggio.")
-        return
+                st.sidebar.success("✅ Selezione confermata! Scegli un'analisi.")
 
-    # **Calcolo del p-value se non è presente**
-    if "p-value" not in dati_preparati.columns and "-log10(p-value)" in dati_preparati.columns:
-        dati_preparati["p-value"] = np.power(10, -dati_preparati["-log10(p-value)"])
+# Dopo la conferma della selezione, abilitare la navigazione
+if "dati_filtrati" in st.session_state and st.session_state["dati_filtrati"] is not None:
+    st.sidebar.title("📊 Navigazione")
+    sezione = st.sidebar.radio("Scegli una sezione:", ["Volcano Plot", "Tabella Dati"])
 
-    # **Calcolo della colonna "Prodotto"**
-    dati_preparati["Prodotto"] = dati_preparati["-log10(p-value)"] * dati_preparati["Log2FoldChange"]
-
-    # **Selezione delle colonne richieste**
-    colonne_finali = ["Variabile", "Log2FoldChange", "-log10(p-value)", "p-value", "Prodotto"]
-    tabella_finale = dati_preparati[colonne_finali]
-
-    # **Mostra la tabella**
-    st.dataframe(tabella_finale, use_container_width=True)
+    if sezione == "Volcano Plot":
+        mostra_volcano_plot()
+    elif sezione == "Tabella Dati":
+        import table_app  # ✅ Importa il modulo quando necessario (senza chiamare `mostra_tabella()`)
+else:
+    st.sidebar.info("🔹 Carica un file e seleziona due classi per procedere.")
