@@ -18,6 +18,10 @@ try:
 except Exception as e:
     st.error(f"❌ Errore nell'import di mostra_tabella: {e}")
 
+# Sidebar - Caricamento file
+st.sidebar.title("📂 Caricamento Dati")
+file = st.sidebar.file_uploader("Carica il file Excel", type=['xlsx'])  # ✅ AGGIUNTO FILE UPLOADER
+
 # Sidebar - Form per specificare i parametri di filtraggio
 st.sidebar.subheader("⚙️ Parametri di filtraggio")
 st.session_state["fold_change_threshold"] = st.sidebar.number_input("Soglia Log2FoldChange", value=0.0)
@@ -27,7 +31,7 @@ st.session_state["p_value_threshold"] = st.sidebar.number_input("Soglia -log10(p
 st.write(f"🔍 Valori soglia selezionati - Log2FC: {st.session_state['fold_change_threshold']}, -log10(p-value): {st.session_state['p_value_threshold']}")
 
 # Controllo se il file è stato caricato
-if file is not None:
+if file is not None:  # ✅ ORA FILE È DEFINITO
     if "file_name" not in st.session_state or st.session_state["file_name"] != file.name:
         dati, classi = carica_dati(file)
         if dati is not None and len(classi) > 1:
@@ -55,11 +59,6 @@ if file is not None:
                 st.session_state["class_2"] = class_2
 
                 st.sidebar.success("✅ Selezione confermata! Scegli un'analisi.")
-
-# Sidebar - Form per specificare i parametri di filtraggio
-st.sidebar.subheader("⚙️ Parametri di filtraggio")
-st.session_state["fold_change_threshold"] = st.sidebar.number_input("Soglia Log2FoldChange", value=0.0)
-st.session_state["p_value_threshold"] = st.sidebar.number_input("Soglia -log10(p-value)", value=0.0)
 
 # Dopo la conferma della selezione, abilitare la navigazione
 if "dati_filtrati" in st.session_state and st.session_state["dati_filtrati"] is not None:
