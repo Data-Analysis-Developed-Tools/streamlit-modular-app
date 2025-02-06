@@ -1,20 +1,42 @@
 import pandas as pd
-import openpyxl
+import streamlit as st
+import numpy as np
+import io
+from scipy.stats import ttest_ind
 
-def filter_and_save_excel(input_file, output_sheet="selected class"):
-    # Caricare il file Excel
-    df = pd.read_excel(input_file, engine='openpyxl')
-    
-    # Selezionare solo le colonne con meno del 90% di valori NaN
-    threshold = 0.9 * len(df)
-    selected_columns = df.loc[:, df.isnull().sum() < threshold]
-    
-    # Caricare il file Excel esistente per non sovrascriverlo
-    with pd.ExcelWriter(input_file, engine='openpyxl', mode='a', if_sheet_exists='replace') as writer:
-        selected_columns.to_excel(writer, sheet_name=output_sheet, index=False)
-    
-    print(f"Colonne filtrate salvate nel file '{input_file}' nel foglio '{output_sheet}'.")
+# Funzione per caricare i dati
+def carica_dati(uploaded_file):
+    try:
+        if uploaded_file is not None:
+            # Legge direttamente il file senza bisogno di salvarlo su disco
+            dati = pd.read_excel(uploaded_file, header=[0, 1], index_col=0, engine='openpyxl')
+            classi = dati.columns.get_level_values(1).unique()
+            return dati, classi
+    except Exception as e:
+        st.error(f"Errore nel caricamento del file: {str(e)}")
+        return None, None
 
-# Esempio di utilizzo
-input_file = "dataset.xlsx"  # Sostituire con il proprio file Excel
-filter_and_save_excel(input_file)
+# Funzione per calcolare la media logaritmica
+def calcola_media_log(dati):
+    media = dati.mean(axis=1)
+    return np.log10(media + 1)  # Aggiunge 1 per evitare log di zero
+
+# Funzione per preparare i dati per il Volcano Plot
+def prepara_dati(dati, classi, fold_change_threshold, p_value_threshold):
+    if dati is not None:
+        media_log = calcola_media_log(dati.iloc[:, 1:])
+        risultati = []
+        for var in dati.index:
+            valori = [dati.loc[var, dati.columns.get_level_values(1) == classe].dropna().values for classe in classi]
+            if len(valori[0]) > 0 and len(valori[1]) > 0:
+                media_diff = np.log2(np.mean(valori[0]) / np.mean(valori[1]))
+                t_stat, p_val = ttest_ind(valori[0], valori[1], equal_var=False)
+                p_val_log = -np.log10(p_val) if p_val > 0 else None
+                pval_log2fc = p_val_log * media_diff if p_val_log is not None else None
+                risultati.append([var, media_diff, p_val_log, pval_log2fc, media_log[var]])
+        
+        risultati_df = pd.DataFrame(risultati, columns=['Variabile', 'Log2FoldChange', '-log10(p-value)', '-log10(p-value) x Log2FoldChange', 'MediaLog'])
+        return risultati_df
+    else:
+        st.error("Il dataframe non contiene un indice multi-livello come atteso.")
+        return None
