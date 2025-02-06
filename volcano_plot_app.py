@@ -4,6 +4,13 @@ import plotly.express as px
 import plotly.graph_objects as go
 from components.data_loader import prepara_dati
 
+# Recupera i parametri impostati nella sidebar
+fold_change_threshold = st.session_state.get("fold_change_threshold", 0.0)
+p_value_threshold = st.session_state.get("p_value_threshold", 0.05)
+
+# Debug: Verifica che i valori vengano ricevuti
+st.write(f"📡 Ricevuto in Volcano Plot - Log2FC: {fold_change_threshold}, -log10(p-value): {p_value_threshold}")
+
 def mostra_volcano_plot():
     st.title("Volcano Plot Interattivo")
 
