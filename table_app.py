@@ -32,15 +32,7 @@ def mostra_volcano_plot():
     size_by_media = st.sidebar.checkbox("Dimensiona punti per media valori (n^MediaLog)", value=False)
     color_by_media = st.sidebar.checkbox("Colora punti per media valori", value=False)
 
-    # Se "Dimensiona punti per media valori" è attivato, mostra il cursore per scegliere la base dell'esponenziale
-    if size_by_media:
-        n_base = st.sidebar.slider("Scegli la base dell'esponenziale (n)", min_value=1, max_value=25, value=10)
-    else:
-        n_base = None  # Se l'opzione non è attivata, nessuna base è usata
-
-    st.write(f"📊 Soglie impostate: Log2FC={fold_change_threshold}, -log10(p-value)={p_value_threshold}")
-
-    # Prepara i dati per il Volcano Plot
+        # Prepara i dati per il Volcano Plot
     try:
         dati_preparati = prepara_dati(dati, classi, fold_change_threshold, p_value_threshold)
         st.write("✅ Funzione `prepara_dati` eseguita correttamente.")
@@ -52,16 +44,6 @@ def mostra_volcano_plot():
         st.error("⚠️ Il dataframe 'dati_preparati' è vuoto! Controlla i parametri di filtraggio.")
         return
 
-    # **Modifica**: Calcolo della dimensione dei punti con n^MediaLog se l'opzione è attivata
-    if size_by_media and n_base is not None:
-        dati_preparati["SizeScaled"] = np.power(n_base, dati_preparati["MediaLog"])  # n^MediaLog
-    else:
-        dati_preparati["SizeScaled"] = 0.0001  # Imposta un valore piccolo per avere punti simili alle etichette
-
-    # Determina i limiti della scala in base ai dati filtrati
-    x_min = min(dati_preparati['Log2FoldChange'].min(), -fold_change_threshold * 1.2)
-    x_max = max(dati_preparati['Log2FoldChange'].max(), fold_change_threshold * 1.2)
-    y_max = max(dati_preparati['-log10(p-value)'].max(), p_value_threshold * 1.2)
 
     # Generazione del Volcano Plot con scala dinamica
     try:
@@ -86,32 +68,12 @@ def mostra_volcano_plot():
                                  mode='lines', line=dict(color='red', dash='dash', width=2),
                                  name=f"+Log2FC soglia ({fold_change_threshold})"))
 
-        # Linea di soglia -log10(p-value)
-        fig.add_trace(go.Scatter(x=[x_min, x_max], 
-                                 y=[p_value_threshold, p_value_threshold], 
-                                 mode='lines', line=dict(color='blue', dash='dash', width=2),
-                                 name=f"Soglia -log10(p-value) ({p_value_threshold})"))
-
-        # Aggiunta della linea verticale grigio chiaro a x=0 (asse Log2FoldChange)
-        fig.add_trace(go.Scatter(x=[0, 0], 
-                                 y=[0, y_max], 
-                                 mode='lines', line=dict(color='lightgray', dash='dash', width=1.5),
-                                 name="Log2FC = 0"))
 
         st.plotly_chart(fig)
         st.write("✅ Volcano Plot generato con successo!")
     except Exception as e:
         st.error(f"❌ Errore durante la generazione del Volcano Plot: {e}")
-    
-    # **Generazione della tabella solo se le soglie sono state modificate**
-    if fold_change_threshold != default_fold_change or p_value_threshold != default_p_value:
-        st.subheader("🔎 Variabili che superano le soglie impostate")
-        
-        # Filtriamo le variabili che superano entrambe le soglie
-        variabili_significative = dati_preparati[
-            (dati_preparati['-log10(p-value)'] > p_value_threshold) & 
-            (abs(dati_preparati['Log2FoldChange']) > fold_change_threshold)
-        ][['Variabile', '-log10(p-value)', 'Log2FoldChange']]
+
 
         if not variabili_significative.empty:
             st.dataframe(variabili_significative, use_container_width=True)
