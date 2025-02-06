@@ -18,17 +18,27 @@ def mostra_tabella():
         st.error("⚠️ Il dataset filtrato è vuoto!")
         return
 
-    # **Calcolo di Log2FoldChange e -log10(p-value)**
-    try:
-        dati.loc[:, "Log2FoldChange"] = np.log2(dati.iloc[:, 1] / dati.iloc[:, 2])  # ⚠️ Modifica se gli indici delle colonne non sono corretti
-        dati.loc[:, "-log10(p-value)"] = -np.log10(dati["p-value"])
-    except Exception as e:
-        st.error(f"❌ Errore nel calcolo di Log2FoldChange e -log10(p-value): {e}")
+    # **Calcolo di p-value se "-log10(p-value)" è presente**
+    if "-log10(p-value)" in dati.columns:
+        dati["p-value"] = np.power(10, -dati["-log10(p-value)"])  # ✅ Calcolo p-value
+    else:
+        st.error("❌ Errore: la colonna '-log10(p-value)' non è presente nel dataset.")
         return
 
-    # **Calcolo delle nuove colonne**
-    dati.loc[:, "p-value"] = np.power(10, -dati["-log10(p-value)"])  # ✅ Calcolo del p-value
-    dati.loc[:, "Prodotto"] = dati["-log10(p-value)"] * dati["Log2FoldChange"]  # ✅ Prodotto
+    # **Calcolo di Log2FoldChange se le colonne sono presenti**
+    try:
+        colonne_numeriche = dati.select_dtypes(include=[np.number]).columns
+        if len(colonne_numeriche) >= 3:
+            dati["Log2FoldChange"] = np.log2(dati.iloc[:, 1] / dati.iloc[:, 2])  # ⚠️ Modifica se gli indici non sono corretti
+        else:
+            st.error("❌ Errore: Non ci sono abbastanza colonne numeriche per calcolare Log2FoldChange.")
+            return
+    except Exception as e:
+        st.error(f"❌ Errore nel calcolo di Log2FoldChange: {e}")
+        return
+
+    # **Calcolo della colonna "Prodotto"**
+    dati["Prodotto"] = dati["-log10(p-value)"] * dati["Log2FoldChange"]  # ✅ Prodotto
 
     # **Selezione delle colonne richieste**
     colonne_finali = ["Variabile", "Log2FoldChange", "-log10(p-value)", "p-value", "Prodotto"]
