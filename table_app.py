@@ -11,24 +11,24 @@ def mostra_tabella():
         return
     st.write("✅ Dati filtrati trovati in session_state.")
 
-    dati = st.session_state["dati_filtrati"]
+    dati = st.session_state["dati_filtrati"].copy()  # ✅ Creiamo una copia per evitare SettingWithCopyWarning
 
     # **Verifica che il dataset contenga dati validi**
-    if dati is None or dati.empty:
+    if dati.empty:
         st.error("⚠️ Il dataset filtrato è vuoto!")
         return
 
     # **Calcolo di Log2FoldChange e -log10(p-value)**
     try:
-        dati["Log2FoldChange"] = np.log2(dati.iloc[:, 1] / dati.iloc[:, 2])  # ⚠️ Modifica se gli indici delle colonne non sono corretti
-        dati["-log10(p-value)"] = -np.log10(dati["p-value"])
+        dati.loc[:, "Log2FoldChange"] = np.log2(dati.iloc[:, 1] / dati.iloc[:, 2])  # ⚠️ Modifica se gli indici delle colonne non sono corretti
+        dati.loc[:, "-log10(p-value)"] = -np.log10(dati["p-value"])
     except Exception as e:
         st.error(f"❌ Errore nel calcolo di Log2FoldChange e -log10(p-value): {e}")
         return
 
     # **Calcolo delle nuove colonne**
-    dati["p-value"] = np.power(10, -dati["-log10(p-value)"])  # ✅ Calcolo del p-value
-    dati["Prodotto"] = dati["-log10(p-value)"] * dati["Log2FoldChange"]  # ✅ Prodotto
+    dati.loc[:, "p-value"] = np.power(10, -dati["-log10(p-value)"])  # ✅ Calcolo del p-value
+    dati.loc[:, "Prodotto"] = dati["-log10(p-value)"] * dati["Log2FoldChange"]  # ✅ Prodotto
 
     # **Selezione delle colonne richieste**
     colonne_finali = ["Variabile", "Log2FoldChange", "-log10(p-value)", "p-value", "Prodotto"]
