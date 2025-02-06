@@ -1,9 +1,7 @@
 import streamlit as st
-
+from volcano_plot_app import mostra_volcano_plot
+from table_app import mostra_tabella
 from components.data_loader import carica_dati
-
-# Debug: Controlliamo se la funzione esiste
-st.write("✅ Importazione di mostra_volcano_plot avvenuta con successo:", callable(mostra_volcano_plot))
 
 # Configurazione della pagina Streamlit
 st.set_page_config(page_title="Analisi Dati - Volcano Plot e Tabella", layout="wide")
@@ -47,18 +45,14 @@ st.sidebar.subheader("⚙️ Parametri di filtraggio")
 st.session_state["fold_change_threshold"] = st.sidebar.number_input("Soglia Log2FoldChange", value=0.0)
 st.session_state["p_value_threshold"] = st.sidebar.number_input("Soglia -log10(p-value)", value=0.0)
 
-# Debug: Controlliamo se i dati filtrati esistono
-st.write("🔎 Dati filtrati disponibili:", "dati_filtrati" in st.session_state)
-
+# Dopo la conferma della selezione, abilitare la navigazione
 if "dati_filtrati" in st.session_state and st.session_state["dati_filtrati"] is not None:
     st.sidebar.title("📊 Navigazione")
     sezione = st.sidebar.radio("Scegli una sezione:", ["Volcano Plot", "Tabella Dati"])
 
     if sezione == "Volcano Plot":
-        st.write("📢 Chiamata a mostra_volcano_plot()...")  # Debug
         mostra_volcano_plot()
     elif sezione == "Tabella Dati":
-        st.write("📢 Chiamata a mostra_tabella()...")  # Debug
         mostra_tabella()
 else:
     st.sidebar.info("🔹 Carica un file e seleziona due classi per procedere.")
