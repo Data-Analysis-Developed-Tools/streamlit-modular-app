@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-import numpy as np  # ✅ Per calcolare il p-value e altre metriche
+import numpy as np  # ✅ Per il calcolo del p-value e Log2FoldChange
 
 def mostra_tabella():
     st.title("Tabella Dati Filtrati")
@@ -11,7 +11,7 @@ def mostra_tabella():
         return
     st.write("✅ Dati filtrati trovati in session_state.")
 
-    # Creiamo una copia dei dati per evitare problemi con pandas
+    # Creiamo una copia dei dati per evitare modifiche indesiderate
     dati = st.session_state["dati_filtrati"].copy()
 
     # **Verifica che il dataset contenga dati validi**
@@ -22,7 +22,7 @@ def mostra_tabella():
     # **Controllo colonne disponibili**
     st.write("📊 Colonne disponibili nel dataset:", dati.columns.tolist())
 
-    # **Calcolo di Log2FoldChange se le colonne sono presenti**
+    # **Calcolo di Log2FoldChange se le colonne numeriche sono presenti**
     try:
         colonne_numeriche = dati.select_dtypes(include=[np.number]).columns
         if len(colonne_numeriche) >= 2:
@@ -37,8 +37,11 @@ def mostra_tabella():
 
     # **Calcolo di -log10(p-value) se non presente**
     if "-log10(p-value)" not in dati.columns:
-        st.error("❌ Errore: la colonna '-log10(p-value)' non è presente nel dataset.")
-        return
+        try:
+            dati["-log10(p-value)"] = -np.log10(dati["p-value"])
+        except KeyError:
+            st.error("❌ Errore: Non è possibile calcolare -log10(p-value) perché manca la colonna 'p-value'.")
+            return
 
     # **Calcolo di p-value**
     try:
