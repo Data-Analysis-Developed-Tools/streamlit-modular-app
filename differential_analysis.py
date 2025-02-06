@@ -40,15 +40,10 @@ if "dati_filtrati" in st.session_state and st.session_state["dati_filtrati"] is 
     st.sidebar.title("📊 Navigazione")
     sezione = st.sidebar.radio("Scegli una sezione:", ["Volcano Plot", "Tabella Dati"])
 
-    # Recuperare i dati filtrati dalla sessione
-    dati_filtrati = st.session_state["dati_filtrati"]
-    class_1 = st.session_state["class_1"]
-    class_2 = st.session_state["class_2"]
-
     # Mostra la sezione selezionata con i dati filtrati
     if sezione == "Volcano Plot":
-        mostra_volcano_plot(dati_filtrati, [class_1, class_2])
+        mostra_volcano_plot()  # Ora la funzione non riceve parametri
     elif sezione == "Tabella Dati":
-        mostra_tabella(dati_filtrati, [class_1, class_2])
+        mostra_tabella()  # Ora la funzione non riceve parametri
 else:
     st.sidebar.info("🔹 Carica un file e seleziona due classi per procedere.")
