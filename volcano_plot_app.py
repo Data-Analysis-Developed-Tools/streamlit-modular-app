@@ -54,7 +54,7 @@ def mostra_volcano_plot():
     if size_by_media and n_base is not None:
         dati_preparati["SizeScaled"] = np.power(n_base, dati_preparati["MediaLog"])  # n^MediaLog
     else:
-        dati_preparati["SizeScaled"] = 0.0001  # ✅ Imposta valore di default a 0.1 invece di None
+        dati_preparati["SizeScaled"] = 0.0001  # ✅ Imposta un valore piccolo per avere punti simili alle etichette
 
     # Determina i limiti della scala in base ai dati filtrati
     x_min = min(dati_preparati['Log2FoldChange'].min(), -fold_change_threshold * 1.2)
@@ -68,7 +68,7 @@ def mostra_volcano_plot():
                          hover_data=['Variabile'],
                          color=dati_preparati['MediaLog'] if color_by_media else None,
                          size=dati_preparati['SizeScaled'],  # **Usa il valore esponenziale se attivato**
-                         color_continuous_scale='RdYlBu_r', size_max=50)
+                         color_continuous_scale='RdYlBu_r', size_max=10)  # ✅ Ridotta size_max per coerenza visiva
 
         fig.update_layout(xaxis=dict(range=[x_min, x_max]), 
                           yaxis=dict(range=[0, y_max]))
