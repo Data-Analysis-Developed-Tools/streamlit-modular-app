@@ -14,23 +14,35 @@ def mostra_tabella():
     # Creiamo una copia dei dati per evitare modifiche indesiderate
     dati = st.session_state["dati_filtrati"].copy()
 
+    # **Gestione Multi-Indice**
+    if isinstance(dati.columns, pd.MultiIndex):
+        st.write("🔍 Il dataset ha colonne Multi-Index. Le ristrutturiamo.")
+        dati.columns = ["_".join(col).strip() for col in dati.columns.values]  # Concateniamo i livelli del MultiIndex
+
+    # **Eliminiamo la prima riga che contiene le classi**
+    dati = dati.iloc[1:].reset_index(drop=True)  # ✅ Rimuove la prima riga
+
+    # **Mostra le colonne disponibili dopo la pulizia**
+    st.write("📊 Colonne disponibili dopo la ristrutturazione:", dati.columns.tolist())
+
     # **Verifica che il dataset contenga dati validi**
     if dati.empty:
-        st.error("⚠️ Il dataset filtrato è vuoto!")
+        st.error("⚠️ Il dataset filtrato è vuoto dopo la rimozione delle classi!")
         return
 
-    # **Controllo colonne disponibili**
-    st.write("📊 Colonne disponibili nel dataset:", dati.columns.tolist())
+    # **Identificazione della colonna delle variabili**
+    colonna_variabili = dati.columns[0]  # La prima colonna contiene i nomi delle variabili
+    dati.rename(columns={colonna_variabili: "Variabile"}, inplace=True)  # Rinominiamo per chiarezza
 
-    # **Calcolo di Log2FoldChange se le colonne numeriche sono presenti**
+    # **Selezioniamo le colonne numeriche corrette**
+    colonne_numeriche = dati.select_dtypes(include=[np.number]).columns
+    if len(colonne_numeriche) < 2:
+        st.error("❌ Errore: Non ci sono abbastanza colonne numeriche per calcolare Log2FoldChange.")
+        return
+
+    # **Calcolo di Log2FoldChange**
     try:
-        colonne_numeriche = dati.select_dtypes(include=[np.number]).columns
-        if len(colonne_numeriche) >= 2:
-            # Prendiamo le prime due colonne numeriche per calcolare il Log2FoldChange
-            dati["Log2FoldChange"] = np.log2(dati[colonne_numeriche[0]] / dati[colonne_numeriche[1]])
-        else:
-            st.error("❌ Errore: Non ci sono abbastanza colonne numeriche per calcolare Log2FoldChange.")
-            return
+        dati["Log2FoldChange"] = np.log2(dati[colonne_numeriche[0]] / dati[colonne_numeriche[1]])
     except Exception as e:
         st.error(f"❌ Errore nel calcolo di Log2FoldChange: {e}")
         return
