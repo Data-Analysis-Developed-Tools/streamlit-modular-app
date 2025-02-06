@@ -1,7 +1,8 @@
 import streamlit as st
 
-def mostra_tabella():
-    st.title("Tabella dei Dati")
+def mostra_volcano_plot():
+    st.title("Volcano Plot Interattivo")
+    st.write("✅ Funzione `mostra_volcano_plot` è stata chiamata correttamente.")
 
     # Controlla se i dati filtrati esistono in session_state
     if "dati_filtrati" not in st.session_state or st.session_state["dati_filtrati"] is None:
