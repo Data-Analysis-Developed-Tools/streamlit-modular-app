@@ -11,34 +11,36 @@ st.sidebar.title("📂 Caricamento Dati")
 file = st.sidebar.file_uploader("Carica il file Excel", type=['xlsx'])
 
 if file is not None:
-    # Carica i dati solo se il file è stato caricato
-    dati, classi = carica_dati(file)
+    # Controllo se i dati sono già caricati in session_state
+    if "dati_completi" not in st.session_state or st.session_state["file_name"] != file.name:
+        # Carica i dati e memorizza in session_state
+        dati, classi = carica_dati(file)
+        if dati is not None and len(classi) > 1:
+            st.session_state["dati_completi"] = dati
+            st.session_state["classi"] = classi
+            st.session_state["file_name"] = file.name  # Memorizza il nome per evitare ricaricamenti inutili
+        else:
+            st.sidebar.warning("⚠️ Il file caricato non contiene abbastanza classi per l'analisi.")
+            st.stop()
 
-    if dati is not None and len(classi) > 1:
-        # Salva i dati filtrati in session_state per garantire che siano accessibili ai moduli
-        st.session_state["dati_completi"] = dati
-        st.session_state["classi"] = classi
+    # Sidebar - Selezione delle classi
+    st.sidebar.subheader("🔍 Seleziona le classi da confrontare:")
+    class_1 = st.sidebar.selectbox("Classe 1", st.session_state["classi"], key="classe1")
+    class_2 = st.sidebar.selectbox("Classe 2", st.session_state["classi"], key="classe2")
 
-        # Sidebar - Selezione delle classi
-        st.sidebar.subheader("🔍 Seleziona le classi da confrontare:")
-        class_1 = st.sidebar.selectbox("Classe 1", classi, key="classe1")
-        class_2 = st.sidebar.selectbox("Classe 2", classi, key="classe2")
+    # Tasto di conferma selezione
+    if st.sidebar.button("✅ Conferma selezione"):
+        if class_1 and class_2 and class_1 != class_2:
+            # Filtrare i dati solo per le classi selezionate
+            dati_filtrati = st.session_state["dati_completi"].loc[:, 
+                st.session_state["dati_completi"].columns.get_level_values(1).isin([class_1, class_2])]
 
-        # Tasto di conferma selezione
-        if st.sidebar.button("✅ Conferma selezione"):
-            if class_1 and class_2 and class_1 != class_2:
-                # Filtrare i dati solo per le classi selezionate
-                dati_filtrati = dati.loc[:, dati.columns.get_level_values(1).isin([class_1, class_2])]
+            # Memorizzare i dati filtrati in session_state
+            st.session_state["dati_filtrati"] = dati_filtrati
+            st.session_state["class_1"] = class_1
+            st.session_state["class_2"] = class_2
 
-                # Memorizzare i dati filtrati in session_state
-                st.session_state["dati_filtrati"] = dati_filtrati
-                st.session_state["class_1"] = class_1
-                st.session_state["class_2"] = class_2
-
-                st.sidebar.success("✅ Selezione confermata! Scegli un'analisi.")
-
-    else:
-        st.sidebar.warning("⚠️ Il file caricato non contiene abbastanza classi per l'analisi.")
+            st.sidebar.success("✅ Selezione confermata! Scegli un'analisi.")
 
 # Dopo la conferma della selezione, abilitare la navigazione
 if "dati_filtrati" in st.session_state:
