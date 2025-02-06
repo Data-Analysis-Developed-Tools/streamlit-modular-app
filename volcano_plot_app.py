@@ -6,6 +6,7 @@ from components.data_loader import prepara_dati
 
 def mostra_volcano_plot():
     st.title("Volcano Plot Interattivo")
+    st.write("✅ Funzione mostra_volcano_plot è stata chiamata correttamente.")
 
     # Debug 1: Verifica se i dati filtrati esistono
     if "dati_filtrati" not in st.session_state or st.session_state["dati_filtrati"] is None:
