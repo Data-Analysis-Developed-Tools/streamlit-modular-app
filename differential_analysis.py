@@ -14,17 +14,8 @@ file = st.sidebar.file_uploader("Carica il file Excel", type=['xlsx'])
 if file is not None:
     if "file_name" not in st.session_state or st.session_state["file_name"] != file.name:
         # Carica i dati e memorizza in session_state solo se il file è cambiato
-        dati, classi = carica_dati(file)
-        if dati is not None and len(classi) > 1:
-            st.session_state["dati_completi"] = dati
-            st.session_state["classi"] = classi
-            st.session_state["file_name"] = file.name  # Salva il nome del file per evitare ricaricamenti inutili
-            st.session_state["dati_filtrati"] = None  # Reset dei dati filtrati
-        else:
-            st.sidebar.error("⚠️ Il file caricato non contiene abbastanza classi per l'analisi.")
-            st.stop()
-    
-    # Sidebar - Selezione delle classi (solo se i dati sono stati caricati correttamente)
+        carica_dati(file)  # Ora chiamiamo la funzione senza restituire dati
+
     if "classi" in st.session_state:
         st.sidebar.subheader("🔍 Seleziona le classi da confrontare:")
         class_1 = st.sidebar.selectbox("Classe 1", st.session_state["classi"], key="classe1")
