@@ -12,6 +12,7 @@ def mostra_volcano_plot():
     if "dati_filtrati" not in st.session_state or st.session_state["dati_filtrati"] is None:
         st.error("⚠️ Nessun dato filtrato disponibile. Torna alla homepage e seleziona le classi.")
         return
+    st.write("✅ Dati filtrati trovati in session_state.")
 
     dati = st.session_state["dati_filtrati"]
     classi = [st.session_state.get("class_1"), st.session_state.get("class_2")]
@@ -20,6 +21,7 @@ def mostra_volcano_plot():
     if None in classi:
         st.error("⚠️ Le classi non sono state selezionate correttamente.")
         return
+    st.write(f"📊 Generazione Volcano Plot per classi: {classi}")
 
     # Recupera i parametri impostati nella sidebar
     default_fold_change = 0.0
@@ -34,11 +36,14 @@ def mostra_volcano_plot():
     if size_by_media:
         n_base = st.sidebar.slider("Scegli la base dell'esponenziale (n)", min_value=1, max_value=25, value=10)
     else:
-        n_base = None
+        n_base = None  # Se l'opzione non è attivata, nessuna base è usata
+
+    st.write(f"📊 Soglie impostate: Log2FC={fold_change_threshold}, -log10(p-value)={p_value_threshold}")
 
     # Prepara i dati per il Volcano Plot
     try:
         dati_preparati = prepara_dati(dati, classi, fold_change_threshold, p_value_threshold)
+        st.write("✅ Funzione `prepara_dati` eseguita correttamente.")
     except Exception as e:
         st.error(f"❌ Errore in `prepara_dati`: {e}")
         return
@@ -49,9 +54,9 @@ def mostra_volcano_plot():
 
     # **Modifica**: Calcolo della dimensione dei punti con n^MediaLog se l'opzione è attivata
     if size_by_media and n_base is not None:
-        dati_preparati["SizeScaled"] = np.power(n_base, dati_preparati["MediaLog"])
+        dati_preparati["SizeScaled"] = np.power(n_base, dati_preparati["MediaLog"])  # n^MediaLog
     else:
-        dati_preparati["SizeScaled"] = 0.0001
+        dati_preparati["SizeScaled"] = 0.0001  # Imposta un valore piccolo per avere punti simili alle etichette
 
     # Determina i limiti della scala in base ai dati filtrati
     x_min = min(dati_preparati['Log2FoldChange'].min(), -fold_change_threshold * 1.2)
@@ -94,15 +99,21 @@ def mostra_volcano_plot():
                                  name="Log2FC = 0"))
 
         st.plotly_chart(fig)
-    
+        st.write("✅ Volcano Plot generato con successo!")
     except Exception as e:
         st.error(f"❌ Errore durante la generazione del Volcano Plot: {e}")
+    
+    # **Generazione della tabella solo se le soglie sono state modificate**
+    if fold_change_threshold != default_fold_change or p_value_threshold != default_p_value:
+        st.subheader("🔎 Variabili che superano le soglie impostate")
+        
+        # Filtriamo le variabili che superano entrambe le soglie
+        variabili_significative = dati_preparati[
+            (dati_preparati['-log10(p-value)'] > p_value_threshold) & 
+            (abs(dati_preparati['Log2FoldChange']) > fold_change_threshold)
+        ][['Variabile', '-log10(p-value)', 'Log2FoldChange']]
 
-    # **Esportiamo la tabella al modulo `table_app.py` senza visualizzarla**
-    dati_preparati["p-value"] = np.power(10, -dati_preparati["-log10(p-value)"])  
-    dati_preparati["Prodotto"] = dati_preparati["-log10(p-value)"] * dati_preparati["Log2FoldChange"]
-
-    colonne_tabella = ["Variabile", "-log10(p-value)", "p-value", "Log2FoldChange", "Prodotto"]
-    tabella_finale = dati_preparati[colonne_tabella]
-
-    st.session_state["dati_tabella"] = tabella_finale
+        if not variabili_significative.empty:
+            st.dataframe(variabili_significative, use_container_width=True)
+        else:
+            st.write("❌ Nessuna variabile supera entrambe le soglie impostate.")
