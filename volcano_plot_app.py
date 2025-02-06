@@ -24,7 +24,11 @@ def mostra_volcano_plot():
 
     # Recupera i parametri impostati nella sidebar
     fold_change_threshold = st.session_state.get("fold_change_threshold", 0.0)
-    p_value_threshold = st.session_state.get("p_value_threshold", 0.0)
+    p_value_threshold = st.session_state.get("p_value_threshold", 0.05)
+    show_labels = st.sidebar.checkbox("Mostra etichette delle variabili", value=True)
+    size_by_media = st.sidebar.checkbox("Dimensiona punti per media valori", value=False)
+    color_by_media = st.sidebar.checkbox("Colora punti per media valori", value=False)
+
     st.write(f"📊 Soglie impostate: Log2FC={fold_change_threshold}, -log10(p-value)={p_value_threshold}")
 
     # Prepara i dati per il Volcano Plot
@@ -41,11 +45,12 @@ def mostra_volcano_plot():
 
     # Generazione del Volcano Plot
     try:
-        fig = px.scatter(dati_preparati, 
-                         x='Log2FoldChange', 
-                         y='-log10(p-value)', 
-                         text='Variabile', 
-                         hover_data=['Variabile'])
+        fig = px.scatter(dati_preparati, x='Log2FoldChange', y='-log10(p-value)', 
+                         text='Variabile' if show_labels else None,
+                         hover_data=['Variabile'],
+                         color=dati_preparati['MediaLog'] if color_by_media else None,
+                         size=dati_preparati['MediaLog'] if size_by_media else None,
+                         color_continuous_scale='RdYlBu_r', size_max=50)
 
         fig.add_trace(go.Scatter(x=[0, 0], 
                                  y=[0, dati_preparati['-log10(p-value)'].max()], 
