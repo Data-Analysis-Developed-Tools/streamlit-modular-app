@@ -28,7 +28,6 @@ def mostra_volcano_plot():
     except Exception as e:
         st.error(f"❌ Errore in `prepara_dati`: {e}")
         return
-
     if dati_preparati is None or dati_preparati.empty:
         st.error("⚠️ Il dataframe 'dati_preparati' è vuoto! Controlla i parametri di filtraggio.")
         return
