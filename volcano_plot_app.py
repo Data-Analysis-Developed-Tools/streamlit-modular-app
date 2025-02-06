@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+import numpy as np  # ✅ Importato per calcolare n^MediaLog
 from components.data_loader import prepara_dati
 
 def mostra_volcano_plot():
@@ -26,8 +27,14 @@ def mostra_volcano_plot():
     fold_change_threshold = st.session_state.get("fold_change_threshold", 0.0)
     p_value_threshold = st.session_state.get("p_value_threshold", 0.05)
     show_labels = st.sidebar.checkbox("Mostra etichette delle variabili", value=True)
-    size_by_media = st.sidebar.checkbox("Dimensiona punti per media valori", value=False)
+    size_by_media = st.sidebar.checkbox("Dimensiona punti per media valori (n^MediaLog)", value=False)
     color_by_media = st.sidebar.checkbox("Colora punti per media valori", value=False)
+
+    # Se "Dimensiona punti per media valori" è attivato, mostra il cursore per scegliere la base dell'esponenziale
+    if size_by_media:
+        n_base = st.sidebar.slider("Scegli la base dell'esponenziale (n)", min_value=1, max_value=100, value=10)
+    else:
+        n_base = None  # Se l'opzione non è attivata, nessuna base è usata
 
     st.write(f"📊 Soglie impostate: Log2FC={fold_change_threshold}, -log10(p-value)={p_value_threshold}")
 
@@ -43,6 +50,12 @@ def mostra_volcano_plot():
         st.error("⚠️ Il dataframe 'dati_preparati' è vuoto! Controlla i parametri di filtraggio.")
         return
 
+    # **Modifica**: Calcolo della dimensione dei punti con n^MediaLog se l'opzione è attivata
+    if size_by_media and n_base is not None:
+        dati_preparati["SizeScaled"] = np.power(n_base, dati_preparati["MediaLog"])  # n^MediaLog
+    else:
+        dati_preparati["SizeScaled"] = None  # Nessuna modifica alla dimensione
+
     # Determina i limiti della scala in base ai dati filtrati
     x_min = min(dati_preparati['Log2FoldChange'].min(), -fold_change_threshold * 1.2)
     x_max = max(dati_preparati['Log2FoldChange'].max(), fold_change_threshold * 1.2)
@@ -54,7 +67,7 @@ def mostra_volcano_plot():
                          text='Variabile' if show_labels else None,
                          hover_data=['Variabile'],
                          color=dati_preparati['MediaLog'] if color_by_media else None,
-                         size=dati_preparati['MediaLog'] if size_by_media else None,
+                         size=dati_preparati['SizeScaled'],  # **Usa il valore esponenziale se attivato**
                          color_continuous_scale='RdYlBu_r', size_max=50)
 
         fig.update_layout(xaxis=dict(range=[x_min, x_max]), 
