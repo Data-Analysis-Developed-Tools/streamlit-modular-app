@@ -17,10 +17,7 @@ def mostra_tabella():
     # **Gestione Multi-Indice**
     if isinstance(dati.columns, pd.MultiIndex):
         st.write("🔍 Il dataset ha colonne Multi-Index. Le ristrutturiamo.")
-        dati.columns = ["_".join(col).strip() for col in dati.columns.values]  # Concateniamo i livelli del MultiIndex
-
-    # **Eliminiamo la prima riga che contiene le classi**
-    dati = dati.iloc[1:].reset_index(drop=True)  # ✅ Rimuove la prima riga
+        dati.columns = ["_".join(map(str, col)).strip() for col in dati.columns.values]  # Concateniamo i livelli del MultiIndex
 
     # **Mostra le colonne disponibili dopo la pulizia**
     st.write("📊 Colonne disponibili dopo la ristrutturazione:", dati.columns.tolist())
@@ -47,11 +44,15 @@ def mostra_tabella():
         st.error(f"❌ Errore nel calcolo di Log2FoldChange: {e}")
         return
 
-    # **Calcolo di -log10(p-value) se non presente**
+    # **Se manca -log10(p-value), proviamo a calcolarlo da p-value**
     if "-log10(p-value)" not in dati.columns:
-        try:
-            dati["-log10(p-value)"] = -np.log10(dati["p-value"])
-        except KeyError:
+        if "p-value" in dati.columns:
+            try:
+                dati["-log10(p-value)"] = -np.log10(dati["p-value"])
+            except Exception as e:
+                st.error(f"❌ Errore nel calcolo di -log10(p-value): {e}")
+                return
+        else:
             st.error("❌ Errore: Non è possibile calcolare -log10(p-value) perché manca la colonna 'p-value'.")
             return
 
