@@ -32,7 +32,7 @@ def mostra_volcano_plot():
 
     # Se "Dimensiona punti per media valori" è attivato, mostra il cursore per scegliere la base dell'esponenziale
     if size_by_media:
-        n_base = st.sidebar.slider("Scegli la base dell'esponenziale (n)", min_value=1, max_value=100, value=10)
+        n_base = st.sidebar.slider("Scegli la base dell'esponenziale (n)", min_value=1, max_value=25, value=10)
     else:
         n_base = None  # Se l'opzione non è attivata, nessuna base è usata
 
