@@ -10,14 +10,9 @@ st.set_page_config(page_title="Analisi Dati - Volcano Plot e Tabella", layout="w
 st.sidebar.title("📂 Caricamento Dati")
 file = st.sidebar.file_uploader("Carica il file Excel", type=['xlsx'])
 
-# Variabili di stato
-dati_filtrati = None
-class_1 = None
-class_2 = None
-
 if file is not None:
-    # Carica i dati
-    dati, classi = carica_dati(file)
+    # Carica i dati e li salva in session_state
+    dati, classi = carica_dati()
 
     if dati is not None and len(classi) > 1:
         # Sidebar - Selezione delle classi
