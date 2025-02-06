@@ -1,42 +1,49 @@
-import pandas as pd
-import openpyxl
 import streamlit as st
-import io
+import pandas as pd
+from components.data_loader import carica_dati, prepara_dati
+from table_app import mostra_tabella
+from volcano_plot_app import mostra_volcano_plot
 
-def filter_and_save_excel(uploaded_file, output_sheet="selected class"):
-    """Filtra e salva le colonne non vuote nel file Excel caricato da Streamlit"""
-    
-    # Leggere il file direttamente dal buffer (senza salvarlo su disco)
-    try:
-        df = pd.read_excel(uploaded_file, engine='openpyxl')
-    except Exception as e:
-        st.error(f"Errore durante la lettura del file: {e}")
-        return
+# Configurazione della pagina Streamlit
+st.set_page_config(page_title="Analisi Dati - Volcano Plot e Tabella", layout="wide")
 
-    # Selezionare solo le colonne con meno del 90% di valori NaN
-    threshold = 0.9 * len(df)
-    selected_columns = df.loc[:, df.isnull().sum() < threshold]
-
-    # Creare un nuovo buffer di memoria per salvare il file modificato
-    output = io.BytesIO()
-    with pd.ExcelWriter(output, engine='openpyxl', mode='w') as writer:
-        df.to_excel(writer, sheet_name="Original Data", index=False)  # Mantiene i dati originali
-        selected_columns.to_excel(writer, sheet_name=output_sheet, index=False)
-
-    # Spostare il puntatore all'inizio del buffer
-    output.seek(0)
-
-    # Offrire il file da scaricare all'utente
-    st.download_button(label="📥 Scarica il file con i dati filtrati",
-                       data=output,
-                       file_name="filtered_data.xlsx",
-                       mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-
-    st.success(f"✅ Colonne filtrate salvate nel foglio '{output_sheet}' e pronte per il download.")
-
-# Interfaccia Streamlit
+# Sidebar - Caricamento file
 st.sidebar.title("Caricamento dati")
 file = st.sidebar.file_uploader("Carica il file Excel", type=['xlsx'])
 
 if file is not None:
-    filter_and_save_excel(file)
+    # Carica i dati
+    dati, classi = carica_dati(file)
+
+    if dati is not None and len(classi) > 1:
+        # Sidebar - Selezione delle classi
+        st.sidebar.subheader("Seleziona le classi da confrontare:")
+        class_1 = st.sidebar.selectbox("Classe 1", classi)
+        class_2 = st.sidebar.selectbox("Classe 2", classi)
+
+        # Sidebar - Parametri Volcano Plot
+        fold_change_threshold = st.sidebar.number_input('Soglia Log2FoldChange', value=1.0)
+        p_value_threshold = st.sidebar.number_input('Soglia -log10(p-value)', value=0.05)
+
+        # Bottone "Procedi"
+        if st.sidebar.button("Procedi"):
+            if class_1 and class_2 and class_1 != class_2:
+                # Filtrare i dati solo per le classi selezionate
+                dati_filtrati = dati.loc[:, dati.columns.get_level_values(1).isin([class_1, class_2])]
+
+                # Prepara i dati per l'analisi
+                dati_preparati = prepara_dati(dati_filtrati, [class_1, class_2], fold_change_threshold, p_value_threshold)
+
+                # Selezione della vista
+                selezione = st.sidebar.radio("Scegli una sezione:", ["Volcano Plot", "Tabella Dati"])
+
+                if selezione == "Volcano Plot":
+                    mostra_volcano_plot(dati_preparati, class_1, class_2)
+                elif selezione == "Tabella Dati":
+                    mostra_tabella(dati_preparati, class_1, class_2)
+            else:
+                st.warning("⚠️ Seleziona due classi valide per procedere.")
+    else:
+        st.error("⚠️ Il file caricato non contiene abbastanza classi per il confronto.")
+else:
+    st.warning("⚠️ Carica un file Excel per iniziare.")
