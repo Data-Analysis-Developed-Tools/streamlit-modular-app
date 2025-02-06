@@ -18,9 +18,13 @@ try:
 except Exception as e:
     st.error(f"❌ Errore nell'import di mostra_tabella: {e}")
 
-# Sidebar - Caricamento del file
-st.sidebar.title("📂 Caricamento Dati")
-file = st.sidebar.file_uploader("Carica il file Excel", type=['xlsx'])
+# Sidebar - Form per specificare i parametri di filtraggio
+st.sidebar.subheader("⚙️ Parametri di filtraggio")
+st.session_state["fold_change_threshold"] = st.sidebar.number_input("Soglia Log2FoldChange", value=0.0)
+st.session_state["p_value_threshold"] = st.sidebar.number_input("Soglia -log10(p-value)", value=0.0)
+
+# Debug: Visualizziamo i valori impostati nella sidebar
+st.write(f"🔍 Valori soglia selezionati - Log2FC: {st.session_state['fold_change_threshold']}, -log10(p-value): {st.session_state['p_value_threshold']}")
 
 # Controllo se il file è stato caricato
 if file is not None:
