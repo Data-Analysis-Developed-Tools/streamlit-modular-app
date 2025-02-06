@@ -14,17 +14,8 @@ file = st.sidebar.file_uploader("Carica il file Excel", type=['xlsx'])
 if file is not None:
     if "file_name" not in st.session_state or st.session_state["file_name"] != file.name:
         # Carica i dati e memorizza in session_state solo se il file è cambiato
-        dati, classi = carica_dati(file)
-        if dati is not None and len(classi) > 1:
-            st.session_state["dati_completi"] = dati
-            st.session_state["classi"] = classi
-            st.session_state["file_name"] = file.name  # Salva il nome del file per evitare ricaricamenti inutili
-            st.session_state["dati_filtrati"] = None  # Reset dei dati filtrati
-        else:
-            st.sidebar.warning("⚠️ Il file caricato non contiene abbastanza classi per l'analisi.")
-            st.stop()
+        carica_dati(file)  # Ora chiamiamo la funzione senza restituire dati
 
-    # Sidebar - Selezione delle classi (solo se i dati sono stati caricati correttamente)
     if "classi" in st.session_state:
         st.sidebar.subheader("🔍 Seleziona le classi da confrontare:")
         class_1 = st.sidebar.selectbox("Classe 1", st.session_state["classi"], key="classe1")
@@ -56,8 +47,8 @@ if "dati_filtrati" in st.session_state and st.session_state["dati_filtrati"] is 
 
     # Mostra la sezione selezionata con i dati filtrati
     if sezione == "Volcano Plot":
-        mostra_volcano_plot(dati_filtrati, [class_1, class_2])  # Chiamata con parametri
+        mostra_volcano_plot(dati_filtrati, [class_1, class_2])
     elif sezione == "Tabella Dati":
-        mostra_tabella(dati_filtrati, [class_1, class_2])  # Chiamata con parametri
+        mostra_tabella(dati_filtrati, [class_1, class_2])
 else:
     st.sidebar.info("🔹 Carica un file e seleziona due classi per procedere.")
