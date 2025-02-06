@@ -44,11 +44,17 @@ def mostra_tabella():
     tabella_finale = dati_preparati[colonne_tabella]
 
     # **Formattazione condizionale della colonna "Prodotto"**
+    min_val = tabella_finale["Prodotto"].min()
+    max_val = tabella_finale["Prodotto"].max()
+    abs_max = max(abs(min_val), abs(max_val))  # Per normalizzare la scala dei colori
+
     def color_format(val):
         if val < 0:
-            return f'background-color: rgba(0, 0, 255, {abs(val) / max(abs(tabella_finale["Prodotto"]))})'  # Blu per negativi
+            intensity = abs(val) / abs_max
+            return f'background-color: rgba(0, 0, 255, {intensity})'  # Blu per negativi
         elif val > 0:
-            return f'background-color: rgba(255, 0, 0, {val / max(tabella_finale["Prodotto"])})'  # Rosso per positivi
+            intensity = val / abs_max
+            return f'background-color: rgba(255, 0, 0, {intensity})'  # Rosso per positivi
         else:
             return 'background-color: white'  # Bianco per valori vicini a zero
 
@@ -57,3 +63,11 @@ def mostra_tabella():
 
     # **Mostra la tabella**
     st.dataframe(styled_table, use_container_width=True)
+
+    # **Legenda colori**
+    st.markdown("""
+    ### 🔹 Legenda della colorazione nella colonna "Prodotto":
+    - 🔵 **Blu**: Valori negativi estremi (Prodotto < 0)
+    - ⚪ **Bianco**: Valori prossimi a zero
+    - 🔴 **Rosso**: Valori positivi estremi (Prodotto > 0)
+    """)
