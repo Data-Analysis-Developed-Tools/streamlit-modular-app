@@ -10,40 +10,42 @@ st.set_page_config(page_title="Analisi Dati - Volcano Plot e Tabella", layout="w
 st.sidebar.title("📂 Caricamento Dati")
 file = st.sidebar.file_uploader("Carica il file Excel", type=['xlsx'])
 
+# Controllo se il file è stato caricato
 if file is not None:
-    # Controllo se i dati sono già caricati in session_state
-    if "dati_completi" not in st.session_state or st.session_state["file_name"] != file.name:
-        # Carica i dati e memorizza in session_state
+    if "file_name" not in st.session_state or st.session_state["file_name"] != file.name:
+        # Carica i dati e memorizza in session_state solo se il file è cambiato
         dati, classi = carica_dati(file)
         if dati is not None and len(classi) > 1:
             st.session_state["dati_completi"] = dati
             st.session_state["classi"] = classi
-            st.session_state["file_name"] = file.name  # Memorizza il nome per evitare ricaricamenti inutili
+            st.session_state["file_name"] = file.name  # Salva il nome del file per evitare ricaricamenti inutili
+            st.session_state["dati_filtrati"] = None  # Reset dei dati filtrati
         else:
-            st.sidebar.warning("⚠️ Il file caricato non contiene abbastanza classi per l'analisi.")
+            st.sidebar.error("⚠️ Il file caricato non contiene abbastanza classi per l'analisi.")
             st.stop()
+    
+    # Sidebar - Selezione delle classi (solo se i dati sono stati caricati correttamente)
+    if "classi" in st.session_state:
+        st.sidebar.subheader("🔍 Seleziona le classi da confrontare:")
+        class_1 = st.sidebar.selectbox("Classe 1", st.session_state["classi"], key="classe1")
+        class_2 = st.sidebar.selectbox("Classe 2", st.session_state["classi"], key="classe2")
 
-    # Sidebar - Selezione delle classi
-    st.sidebar.subheader("🔍 Seleziona le classi da confrontare:")
-    class_1 = st.sidebar.selectbox("Classe 1", st.session_state["classi"], key="classe1")
-    class_2 = st.sidebar.selectbox("Classe 2", st.session_state["classi"], key="classe2")
+        # Tasto di conferma selezione
+        if st.sidebar.button("✅ Conferma selezione"):
+            if class_1 and class_2 and class_1 != class_2:
+                # Filtrare i dati solo per le classi selezionate
+                dati_filtrati = st.session_state["dati_completi"].loc[:, 
+                    st.session_state["dati_completi"].columns.get_level_values(1).isin([class_1, class_2])]
 
-    # Tasto di conferma selezione
-    if st.sidebar.button("✅ Conferma selezione"):
-        if class_1 and class_2 and class_1 != class_2:
-            # Filtrare i dati solo per le classi selezionate
-            dati_filtrati = st.session_state["dati_completi"].loc[:, 
-                st.session_state["dati_completi"].columns.get_level_values(1).isin([class_1, class_2])]
+                # Memorizzare i dati filtrati in session_state
+                st.session_state["dati_filtrati"] = dati_filtrati
+                st.session_state["class_1"] = class_1
+                st.session_state["class_2"] = class_2
 
-            # Memorizzare i dati filtrati in session_state
-            st.session_state["dati_filtrati"] = dati_filtrati
-            st.session_state["class_1"] = class_1
-            st.session_state["class_2"] = class_2
-
-            st.sidebar.success("✅ Selezione confermata! Scegli un'analisi.")
+                st.sidebar.success("✅ Selezione confermata! Scegli un'analisi.")
 
 # Dopo la conferma della selezione, abilitare la navigazione
-if "dati_filtrati" in st.session_state:
+if "dati_filtrati" in st.session_state and st.session_state["dati_filtrati"] is not None:
     st.sidebar.title("📊 Navigazione")
     sezione = st.sidebar.radio("Scegli una sezione:", ["Volcano Plot", "Tabella Dati"])
 
