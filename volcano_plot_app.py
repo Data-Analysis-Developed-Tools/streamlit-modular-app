@@ -4,13 +4,6 @@ import plotly.express as px
 import plotly.graph_objects as go
 from components.data_loader import prepara_dati
 
-# Recupera i parametri impostati nella sidebar
-fold_change_threshold = st.session_state.get("fold_change_threshold", 0.0)
-p_value_threshold = st.session_state.get("p_value_threshold", 0.05)
-
-# Debug: Verifica che i valori vengano ricevuti
-st.write(f"📡 Ricevuto in Volcano Plot - Log2FC: {fold_change_threshold}, -log10(p-value): {p_value_threshold}")
-
 def mostra_volcano_plot():
     st.title("Volcano Plot Interattivo")
 
@@ -67,6 +60,7 @@ def mostra_volcano_plot():
         fig.update_layout(xaxis=dict(range=[x_min, x_max]), 
                           yaxis=dict(range=[0, y_max]))
 
+        # Linee di soglia Log2FoldChange
         fig.add_trace(go.Scatter(x=[-fold_change_threshold, -fold_change_threshold], 
                                  y=[0, y_max], 
                                  mode='lines', line=dict(color='red', dash='dash', width=2),
@@ -77,10 +71,17 @@ def mostra_volcano_plot():
                                  mode='lines', line=dict(color='red', dash='dash', width=2),
                                  name=f"+Log2FC soglia ({fold_change_threshold})"))
 
+        # Linea di soglia -log10(p-value)
         fig.add_trace(go.Scatter(x=[x_min, x_max], 
                                  y=[p_value_threshold, p_value_threshold], 
                                  mode='lines', line=dict(color='blue', dash='dash', width=2),
                                  name=f"Soglia -log10(p-value) ({p_value_threshold})"))
+
+        # Aggiunta della linea verticale grigio chiaro a x=0 (asse Log2FoldChange)
+        fig.add_trace(go.Scatter(x=[0, 0], 
+                                 y=[0, y_max], 
+                                 mode='lines', line=dict(color='lightgray', dash='dash', width=1.5),
+                                 name="Log2FC = 0"))
 
         st.plotly_chart(fig)
         st.write("✅ Volcano Plot generato con successo!")
