@@ -113,6 +113,11 @@ def mostra_volcano_plot():
             (abs(dati_preparati['Log2FoldChange']) > fold_change_threshold)
         ][['Variabile', '-log10(p-value)', 'Log2FoldChange']]
 
+st.session_state["dati_volcano"] = dati_preparati
+
+# Dopo aver generato `dati_preparati`, salviamolo nella sessione per usarlo in table_app.py
+st.session_state["dati_volcano"] = dati_preparati  # ✅ Salviamo i dati per table_app.py
+
         if not variabili_significative.empty:
             st.dataframe(variabili_significative, use_container_width=True)
         else:
