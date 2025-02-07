@@ -53,9 +53,8 @@ def mostra_volcano_plot():
 
     x_min = min(dati_preparati['Log2FoldChange'].min(), -fold_change_threshold * 1.2)
     x_max = max(dati_preparati['Log2FoldChange'].max(), fold_change_threshold * 1.2)
-    y_max = max(dati_preparati['-log10(p-value)'].max(), p_value_threshold * 1.2)
 
-    # Generazione del Volcano Plot con layout più alto
+    # Generazione del Volcano Plot con altezza aumentata e asse verticale autoscalato
     try:
         fig = px.scatter(dati_preparati, x='Log2FoldChange', y='-log10(p-value)', 
                          text='Variabile' if show_labels else None,
@@ -66,18 +65,18 @@ def mostra_volcano_plot():
 
         fig.update_layout(
             xaxis=dict(range=[x_min, x_max]),
-            yaxis=dict(range=[0, y_max]),
-            height=900  # 🔥 **Triplica l'altezza del grafico**
+            yaxis=dict(autorange='reversed'),  # 🔥 **Autoscale sull'asse verticale**
+            height=2100  # 🔥 **Aumenta l'altezza del grafico**
         )
 
         # Linee di soglia Log2FoldChange
         fig.add_trace(go.Scatter(x=[-fold_change_threshold, -fold_change_threshold], 
-                                 y=[0, y_max], 
+                                 y=[dati_preparati['-log10(p-value)'].min(), dati_preparati['-log10(p-value)'].max()], 
                                  mode='lines', line=dict(color='red', dash='dash', width=2),
                                  name=f"-Log2FC soglia ({-fold_change_threshold})"))
 
         fig.add_trace(go.Scatter(x=[fold_change_threshold, fold_change_threshold], 
-                                 y=[0, y_max], 
+                                 y=[dati_preparati['-log10(p-value)'].min(), dati_preparati['-log10(p-value)'].max()], 
                                  mode='lines', line=dict(color='red', dash='dash', width=2),
                                  name=f"+Log2FC soglia ({fold_change_threshold})"))
 
@@ -89,7 +88,7 @@ def mostra_volcano_plot():
 
         # Aggiunta della linea verticale grigio chiaro a x=0 (asse Log2FoldChange)
         fig.add_trace(go.Scatter(x=[0, 0], 
-                                 y=[0, y_max], 
+                                 y=[dati_preparati['-log10(p-value)'].min(), dati_preparati['-log10(p-value)'].max()], 
                                  mode='lines', line=dict(color='lightgray', dash='dash', width=1.5),
                                  name="Log2FC = 0"))
 
