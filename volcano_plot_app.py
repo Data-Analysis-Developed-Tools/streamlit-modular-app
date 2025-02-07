@@ -40,7 +40,6 @@ def mostra_volcano_plot():
     try:
         dati_preparati = prepara_dati(dati, classi, fold_change_threshold, p_value_threshold)
         st.success("✅ Funzione `prepara_dati` eseguita correttamente.")  
-        st.write(f"📊 Dati preparati: {len(dati_preparati)} righe")  # Debug: mostra il numero di righe
     except Exception as e:
         st.error(f"❌ Errore in `prepara_dati`: {e}")
         return
@@ -94,9 +93,6 @@ def mostra_volcano_plot():
     except Exception as e:
         st.error(f"❌ Errore durante la generazione del Volcano Plot: {e}")
 
-    # **Debug: Verifica che le colonne esistano prima del filtraggio**
-    st.write("🔍 Colonne disponibili in `dati_preparati`:", dati_preparati.columns.tolist())
-
     # **Aggiunta della tabella con i criteri di filtraggio originali**
     st.subheader("🔎 Variabili che superano le soglie impostate")
 
@@ -106,11 +102,7 @@ def mostra_volcano_plot():
             (abs(dati_preparati['Log2FoldChange']) > fold_change_threshold)
         ][['Variabile', '-log10(p-value)', 'Log2FoldChange']]
 
-        st.write(f"📊 Variabili filtrate: {len(variabili_significative)} righe")  # Debug
-
         if not variabili_significative.empty:
             st.dataframe(variabili_significative, use_container_width=True)
         else:
             st.write("❌ Nessuna variabile supera entrambe le soglie impostate.")
-    else:
-        st.error("⚠️ Le colonne necessarie non sono presenti in `dati_preparati`.")
