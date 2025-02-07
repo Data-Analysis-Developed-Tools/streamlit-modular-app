@@ -50,7 +50,7 @@ def mostra_volcano_plot():
 
     # **🔽 Ora le etichette delle classi vengono visualizzate QUI, sotto la conferma**
     st.markdown(f"""
-    <div style="display: flex; justify-content: space-between; margin-bottom: 14px; margin-top: 10px;">
+    <div style="display: flex; justify-content: space-between; margin-bottom: 12px; margin-top: 10px;">
         <h3 style="color: red; text-align: left;">🔴 Over-expression in {classi[1]}</h3>
         <h3 style="color: green; text-align: right;">🟢 Over-expression in {classi[0]}</h3>
     </div>
@@ -68,7 +68,7 @@ def mostra_volcano_plot():
 
     # Aggiungiamo margini proporzionali ai valori reali
     x_margin = abs(x_max_raw - x_min_raw) * 0.1  
-    y_margin = y_max_raw * 0.3  
+    y_margin = y_max_raw * 0.1  
 
     x_min = min(x_min_raw, -fold_change_threshold * 1.2) - x_margin
     x_max = max(x_max_raw, fold_change_threshold * 1.2) + x_margin
