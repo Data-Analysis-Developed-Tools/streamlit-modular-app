@@ -50,7 +50,7 @@ def mostra_volcano_plot():
 
     # **🔽 Ora le etichette delle classi vengono visualizzate QUI, sotto la conferma**
     st.markdown(f"""
-    <div style="display: flex; justify-content: space-between; margin-bottom: 20px; margin-top: 10px;">
+    <div style="display: flex; justify-content: space-between; margin-bottom: 14px; margin-top: 10px;">
         <h3 style="color: red; text-align: left;">🔴 Over-expression in {classi[1]}</h3>
         <h3 style="color: green; text-align: right;">🟢 Over-expression in {classi[0]}</h3>
     </div>
