@@ -18,7 +18,7 @@ def mostra_volcano_plot():
     classi = [st.session_state.get("class_1"), st.session_state.get("class_2")]
 
     # Controlla se le classi sono state selezionate
-    if None in classi:
+    if None in classi or len(classi) < 2:
         st.error("⚠️ Le classi non sono state selezionate correttamente.")
         return
     st.write(f"📊 Generazione Volcano Plot per classi: {classi}")
@@ -102,32 +102,19 @@ def mostra_volcano_plot():
                                  name="Log2FC = 0"))
 
         # **Aggiunta delle etichette delle classi**
-        fig.add_annotation(x=x_min, y=y_max * 1.05, 
+        fig.add_annotation(x=x_min, y=y_max * 1.1, 
                            text=f"Over-expression in {classi[1]}", 
-                           showarrow=False, font=dict(color="red", size=16),
+                           showarrow=False, font=dict(color="red", size=18, family="Arial"),
+                           bgcolor="rgba(255,255,255,0.7)", bordercolor="black",
                            xanchor='left')
 
-        fig.add_annotation(x=x_max, y=y_max * 1.05, 
+        fig.add_annotation(x=x_max, y=y_max * 1.1, 
                            text=f"Over-expression in {classi[0]}", 
-                           showarrow=False, font=dict(color="green", size=16),
+                           showarrow=False, font=dict(color="green", size=18, family="Arial"),
+                           bgcolor="rgba(255,255,255,0.7)", bordercolor="black",
                            xanchor='right')
 
         st.plotly_chart(fig)
         st.write("✅ Volcano Plot generato con successo!")
     except Exception as e:
         st.error(f"❌ Errore durante la generazione del Volcano Plot: {e}")
-    
-    # **Generazione della tabella solo se le soglie sono state modificate**
-    if fold_change_threshold != default_fold_change or p_value_threshold != default_p_value:
-        st.subheader("🔎 Variabili che superano le soglie impostate")
-        
-        # Filtriamo le variabili che superano entrambe le soglie
-        variabili_significative = dati_preparati[
-            (dati_preparati['-log10(p-value)'] > p_value_threshold) & 
-            (abs(dati_preparati['Log2FoldChange']) > fold_change_threshold)
-        ][['Variabile', '-log10(p-value)', 'Log2FoldChange']]
-
-        if not variabili_significative.empty:
-            st.dataframe(variabili_significative, use_container_width=True)
-        else:
-            st.write("❌ Nessuna variabile supera entrambe le soglie impostate.")
