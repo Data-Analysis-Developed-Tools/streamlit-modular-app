@@ -93,6 +93,14 @@ def mostra_volcano_plot():
                                  mode='lines', line=dict(color='red', dash='dash', width=2),
                                  name=f"+Log2FC soglia ({fold_change_threshold})"))
 
+           # **Aggiunta delle etichette delle classi sopra il grafico**
+        fig.add_annotation(
+            x=x_min, y=y_max + (y_max * 0.5),
+            text=f"Over-expression in {classi[1]}",
+            showarrow=False, font=dict(color="red", size=18, family="Arial"),
+            bgcolor="rgba(255,255,255,0.7)", bordercolor="black",
+            xanchor='left'
+
         # Linea di soglia -log10(p-value)
         fig.add_trace(go.Scatter(x=[x_min, x_max], 
                                  y=[p_value_threshold, p_value_threshold], 
@@ -105,14 +113,7 @@ def mostra_volcano_plot():
                                  mode='lines', line=dict(color='lightgray', dash='dash', width=1.5),
                                  name="Log2FC = 0"))
 
-        # **Aggiunta delle etichette delle classi sopra il grafico**
-        fig.add_annotation(
-            x=x_min, y=y_max + (y_max * 0.5),
-            text=f"Over-expression in {classi[1]}",
-            showarrow=False, font=dict(color="red", size=18, family="Arial"),
-            bgcolor="rgba(255,255,255,0.7)", bordercolor="black",
-            xanchor='left'
-        )
+             )
 
         fig.add_annotation(
             x=x_max, y=y_max + (y_max * 0.05),
