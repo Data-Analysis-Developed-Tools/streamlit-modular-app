@@ -67,7 +67,7 @@ def mostra_tabella():
     # **Legenda colori con riferimento alle classi**
     st.markdown(f"""
     ### 🔹 Legenda della colorazione nella colonna "Prodotto":
-    - 🔵 **Blu**: Variabili **sotto-espressione** in **{classi[0]}**
+    - 🔵 **Blu**: Variabili **sovra-espressione** in **{classi[0]}**
     - ⚪ **Bianco**: Variabili con espressione simile tra le classi
     - 🔴 **Rosso**: Variabili **sovra-espressione** in **{classi[1]}**
     """)
