@@ -51,10 +51,10 @@ def mostra_tabella():
     def color_format(val):
         if val < 0:
             intensity = abs(val) / abs_max
-            return f'background-color: rgba(0, 0, 255, {intensity})'  # Blu per negativi
+            return f'background-color: rgba(255, 0, 0, {intensity})'  # 🔴 ROSSO per sotto-espressione
         elif val > 0:
             intensity = val / abs_max
-            return f'background-color: rgba(255, 0, 0, {intensity})'  # Rosso per positivi
+            return f'background-color: rgba(0, 0, 255, {intensity})'  # 🔵 BLU per sovra-espressione
         else:
             return 'background-color: white'  # Bianco per valori vicini a zero
 
@@ -64,10 +64,11 @@ def mostra_tabella():
     # **Mostra la tabella**
     st.dataframe(styled_table, use_container_width=True)
 
-    # **Legenda colori con riferimento alle classi**
+    # **Legenda colori con riferimento alle classi (invertita rispetto alla versione precedente)**
     st.markdown(f"""
     ### 🔹 Legenda della colorazione nella colonna "Prodotto":
-    - 🔵 **Blu**: Variabili **sovra-espressione** in **{classi[0]}**
+    - 🔴 **Rosso**: Variabili **sotto-espressione** in **{classi[1]}**
     - ⚪ **Bianco**: Variabili con espressione simile tra le classi
-    - 🔴 **Rosso**: Variabili **sovra-espressione** in **{classi[1]}**
+    - 🔵 **Blu**: Variabili **sovra-espressione** in **{classi[0]}**
     """)
+
