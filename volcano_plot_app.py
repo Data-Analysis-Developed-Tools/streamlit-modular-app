@@ -63,7 +63,7 @@ def mostra_volcano_plot():
     x_max = max(dati_preparati['Log2FoldChange'].max(), fold_change_threshold * 1.2)
     y_max = max(dati_preparati['-log10(p-value)'].max(), p_value_threshold * 1.2)
 
-    # Generazione del Volcano Plot con altezza modificata e asse y normale
+    # Generazione del Volcano Plot
     try:
         fig = px.scatter(dati_preparati, x='Log2FoldChange', y='-log10(p-value)', 
                          text='Variabile' if show_labels else None,
@@ -74,8 +74,8 @@ def mostra_volcano_plot():
 
         fig.update_layout(
             xaxis=dict(range=[x_min, x_max]),
-            yaxis=dict(range=[0, y_max]),  # 🔥 **Mantiene l'asse y normale**
-            height=1000  # 🔥 **Modificata l'altezza a 1000 pixel**
+            yaxis=dict(range=[0, y_max]),  
+            height=1000  
         )
 
         # Linee di soglia Log2FoldChange
@@ -100,6 +100,17 @@ def mostra_volcano_plot():
                                  y=[0, y_max], 
                                  mode='lines', line=dict(color='lightgray', dash='dash', width=1.5),
                                  name="Log2FC = 0"))
+
+        # **Aggiunta delle etichette delle classi**
+        fig.add_annotation(x=x_min, y=y_max * 1.05, 
+                           text=f"Over-expression in {classi[1]}", 
+                           showarrow=False, font=dict(color="red", size=16),
+                           xanchor='left')
+
+        fig.add_annotation(x=x_max, y=y_max * 1.05, 
+                           text=f"Over-expression in {classi[0]}", 
+                           showarrow=False, font=dict(color="green", size=16),
+                           xanchor='right')
 
         st.plotly_chart(fig)
         st.write("✅ Volcano Plot generato con successo!")
