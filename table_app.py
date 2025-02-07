@@ -64,10 +64,10 @@ def mostra_tabella():
     # **Mostra la tabella**
     st.dataframe(styled_table, use_container_width=True)
 
-    # **Legenda colori**
-    st.markdown("""
+    # **Legenda colori con riferimento alle classi**
+    st.markdown(f"""
     ### 🔹 Legenda della colorazione nella colonna "Prodotto":
-    - 🔵 **Blu**: Valori negativi estremi (Prodotto < 0)
-    - ⚪ **Bianco**: Valori prossimi a zero
-    - 🔴 **Rosso**: Valori positivi estremi (Prodotto > 0)
+    - 🔵 **Blu**: Variabili **sotto-espressione** in **{classi[0]}**
+    - ⚪ **Bianco**: Variabili con espressione simile tra le classi
+    - 🔴 **Rosso**: Variabili **sovra-espressione** in **{classi[1]}**
     """)
