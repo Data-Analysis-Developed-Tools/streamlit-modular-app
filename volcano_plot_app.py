@@ -107,7 +107,7 @@ def mostra_volcano_plot():
 
         # **Aggiunta delle etichette delle classi sopra il grafico**
         fig.add_annotation(
-            x=x_min, y=y_max + (y_max * 0.05),
+            x=x_min, y=y_max + (y_max * 0.5),
             text=f"Over-expression in {classi[1]}",
             showarrow=False, font=dict(color="red", size=18, family="Arial"),
             bgcolor="rgba(255,255,255,0.7)", bordercolor="black",
