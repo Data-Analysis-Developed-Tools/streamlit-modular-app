@@ -40,6 +40,7 @@ def mostra_volcano_plot():
     try:
         dati_preparati = prepara_dati(dati, classi, fold_change_threshold, p_value_threshold)
         st.success("✅ Funzione `prepara_dati` eseguita correttamente.")  
+        st.write(f"📊 Dati preparati: {len(dati_preparati)} righe")  # Debug: mostra il numero di righe
     except Exception as e:
         st.error(f"❌ Errore in `prepara_dati`: {e}")
         return
@@ -88,40 +89,28 @@ def mostra_volcano_plot():
             margin=dict(l=150, r=150, t=200, b=100)
         )
 
-        fig.add_trace(go.Scatter(x=[-fold_change_threshold, -fold_change_threshold], 
-                                 y=[0, y_max], 
-                                 mode='lines', line=dict(color='red', dash='dash', width=2),
-                                 name=f"-Log2FC soglia ({-fold_change_threshold})"))
-
-        fig.add_trace(go.Scatter(x=[fold_change_threshold, fold_change_threshold], 
-                                 y=[0, y_max], 
-                                 mode='lines', line=dict(color='red', dash='dash', width=2),
-                                 name=f"+Log2FC soglia ({fold_change_threshold})"))
-
-        fig.add_trace(go.Scatter(x=[x_min, x_max], 
-                                 y=[p_value_threshold, p_value_threshold], 
-                                 mode='lines', line=dict(color='blue', dash='dash', width=2),
-                                 name=f"Soglia -log10(p-value) ({p_value_threshold})"))
-
-        fig.add_trace(go.Scatter(x=[0, 0], 
-                                 y=[0, y_max], 
-                                 mode='lines', line=dict(color='lightgray', dash='dash', width=1.5),
-                                 name="Log2FC = 0"))
-
         st.plotly_chart(fig)
         st.write("✅ Volcano Plot generato con successo!")
     except Exception as e:
         st.error(f"❌ Errore durante la generazione del Volcano Plot: {e}")
 
+    # **Debug: Verifica che le colonne esistano prima del filtraggio**
+    st.write("🔍 Colonne disponibili in `dati_preparati`:", dati_preparati.columns.tolist())
+
     # **Aggiunta della tabella con i criteri di filtraggio originali**
     st.subheader("🔎 Variabili che superano le soglie impostate")
 
-    variabili_significative = dati_preparati[
-        (dati_preparati['-log10(p-value)'] > p_value_threshold) & 
-        (abs(dati_preparati['Log2FoldChange']) > fold_change_threshold)
-    ][['Variabile', '-log10(p-value)', 'Log2FoldChange']]
+    if "-log10(p-value)" in dati_preparati.columns and "Log2FoldChange" in dati_preparati.columns:
+        variabili_significative = dati_preparati[
+            (dati_preparati['-log10(p-value)'] > p_value_threshold) & 
+            (abs(dati_preparati['Log2FoldChange']) > fold_change_threshold)
+        ][['Variabile', '-log10(p-value)', 'Log2FoldChange']]
 
-    if not variabili_significative.empty:
-        st.dataframe(variabili_significative, use_container_width=True)
+        st.write(f"📊 Variabili filtrate: {len(variabili_significative)} righe")  # Debug
+
+        if not variabili_significative.empty:
+            st.dataframe(variabili_significative, use_container_width=True)
+        else:
+            st.write("❌ Nessuna variabile supera entrambe le soglie impostate.")
     else:
-        st.write("❌ Nessuna variabile supera entrambe le soglie impostate.")
+        st.error("⚠️ Le colonne necessarie non sono presenti in `dati_preparati`.")
