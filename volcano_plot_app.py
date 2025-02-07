@@ -21,14 +21,6 @@ def mostra_volcano_plot():
     if None in classi or len(classi) < 2:
         st.error("⚠️ Le classi non sono state selezionate correttamente.")
         return
-    
-    # **Mostriamo le etichette delle classi sopra il grafico**
-    st.markdown(f"""
-    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-        <h3 style="color: red; text-align: left;">🔴 Over-expression in {classi[1]}</h3>
-        <h3 style="color: green; text-align: right;">🟢 Over-expression in {classi[0]}</h3>
-    </div>
-    """, unsafe_allow_html=True)
 
     # Recupera i parametri impostati nella sidebar
     fold_change_threshold = st.session_state.get("fold_change_threshold", 0.0)
@@ -47,7 +39,7 @@ def mostra_volcano_plot():
     # Prepara i dati per il Volcano Plot
     try:
         dati_preparati = prepara_dati(dati, classi, fold_change_threshold, p_value_threshold)
-        st.write("✅ Funzione `prepara_dati` eseguita correttamente.")
+        st.success("✅ Funzione `prepara_dati` eseguita correttamente.")  # 🔥 Conferma prima delle etichette
     except Exception as e:
         st.error(f"❌ Errore in `prepara_dati`: {e}")
         return
@@ -56,6 +48,15 @@ def mostra_volcano_plot():
         st.error("⚠️ Il dataframe 'dati_preparati' è vuoto! Controlla i parametri di filtraggio.")
         return
 
+    # **🔽 Ora le etichette delle classi vengono visualizzate QUI, sotto la conferma**
+    st.markdown(f"""
+    <div style="display: flex; justify-content: space-between; margin-bottom: 20px; margin-top: 10px;">
+        <h3 style="color: red; text-align: left;">🔴 Over-expression in {classi[1]}</h3>
+        <h3 style="color: green; text-align: right;">🟢 Over-expression in {classi[0]}</h3>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # **Ora generiamo il Volcano Plot**
     if size_by_media and n_base is not None:
         dati_preparati["SizeScaled"] = np.power(n_base, dati_preparati["MediaLog"])
     else:
