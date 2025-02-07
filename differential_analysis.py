@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import re  # 📌 Libreria per rimuovere i suffissi numerici
 
 # 🚀 `st.set_page_config()` deve essere la PRIMA istruzione eseguita
 st.set_page_config(page_title="Analisi Dati - Volcano Plot e Tabella", layout="wide")
@@ -36,12 +37,15 @@ if file is not None:
     if "file_name" not in st.session_state or st.session_state["file_name"] != file.name:
         dati, classi_con_duplicate = carica_dati(file)
 
-        # **Elimina duplicati dalle etichette di classe mantenendo solo classi uniche**
-        classi = list(set(classi_con_duplicate))
+        # **📌 Rimuove i suffissi numerici (.1, .2, .3, ecc.) per evitare classi duplicate**
+        classi_pulite = [re.sub(r'\.\d+$', '', classe) for classe in classi_con_duplicate]
 
-        if dati is not None and len(classi) > 1:
+        # **Rimuove eventuali duplicati causati dai suffissi**
+        classi_uniche = list(set(classi_pulite))
+
+        if dati is not None and len(classi_uniche) > 1:
             st.session_state["dati_completi"] = dati
-            st.session_state["classi"] = classi
+            st.session_state["classi"] = classi_uniche
             st.session_state["file_name"] = file.name
             st.session_state["dati_filtrati"] = None
         else:
