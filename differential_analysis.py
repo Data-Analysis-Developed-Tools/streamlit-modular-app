@@ -1,4 +1,5 @@
 import streamlit as st
+import pandas as pd
 
 # 🚀 `st.set_page_config()` deve essere la PRIMA istruzione eseguita
 st.set_page_config(page_title="Analisi Dati - Volcano Plot e Tabella", layout="wide")
@@ -20,7 +21,7 @@ except Exception as e:
 
 # Sidebar - Caricamento file
 st.sidebar.title("📂 Caricamento Dati")
-file = st.sidebar.file_uploader("Carica il file Excel", type=['xlsx'])  # ✅ AGGIUNTO FILE UPLOADER
+file = st.sidebar.file_uploader("Carica il file Excel", type=['xlsx'])
 
 # Sidebar - Form per specificare i parametri di filtraggio
 st.sidebar.subheader("⚙️ Parametri di filtraggio")
@@ -31,9 +32,13 @@ st.session_state["p_value_threshold"] = st.sidebar.number_input("Soglia -log10(p
 st.write(f"🔍 Valori soglia selezionati - Log2FC: {st.session_state['fold_change_threshold']}, -log10(p-value): {st.session_state['p_value_threshold']}")
 
 # Controllo se il file è stato caricato
-if file is not None:  # ✅ ORA FILE È DEFINITO
+if file is not None:
     if "file_name" not in st.session_state or st.session_state["file_name"] != file.name:
-        dati, classi = carica_dati(file)
+        dati, classi_con_duplicate = carica_dati(file)
+
+        # **Elimina duplicati dalle etichette di classe mantenendo solo classi uniche**
+        classi = list(set(classi_con_duplicate))
+
         if dati is not None and len(classi) > 1:
             st.session_state["dati_completi"] = dati
             st.session_state["classi"] = classi
@@ -46,8 +51,8 @@ if file is not None:  # ✅ ORA FILE È DEFINITO
     # Sidebar - Selezione delle classi
     if "classi" in st.session_state:
         st.sidebar.subheader("🔍 Seleziona le classi da confrontare:")
-        class_1 = st.sidebar.selectbox("Classe 1", st.session_state["classi"], key="classe1")
-        class_2 = st.sidebar.selectbox("Classe 2", st.session_state["classi"], key="classe2")
+        class_1 = st.sidebar.selectbox("Classe 1", sorted(st.session_state["classi"]), key="classe1")
+        class_2 = st.sidebar.selectbox("Classe 2", sorted(st.session_state["classi"]), key="classe2")
 
         if st.sidebar.button("✅ Conferma selezione"):
             if class_1 and class_2 and class_1 != class_2:
