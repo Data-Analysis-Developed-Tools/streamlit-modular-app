@@ -75,7 +75,7 @@ def mostra_volcano_plot():
         fig.update_layout(
             xaxis=dict(range=[x_min, x_max]),
             yaxis=dict(range=[0, y_max]),  # 🔥 **Mantiene l'asse y normale**
-            height=1000  # 🔥 **Modificata l'altezza a 1000 pixel**
+            height=700  # 🔥 **Modificata l'altezza a 1000 pixel**
         )
 
         # Linee di soglia Log2FoldChange
