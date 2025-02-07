@@ -88,6 +88,27 @@ def mostra_volcano_plot():
             margin=dict(l=150, r=150, t=200, b=100)
         )
 
+        # **Ripristino delle linee di soglia**
+        fig.add_trace(go.Scatter(x=[-fold_change_threshold, -fold_change_threshold], 
+                                 y=[0, y_max], 
+                                 mode='lines', line=dict(color='red', dash='dash', width=2),
+                                 name=f"-Log2FC soglia ({-fold_change_threshold})"))
+
+        fig.add_trace(go.Scatter(x=[fold_change_threshold, fold_change_threshold], 
+                                 y=[0, y_max], 
+                                 mode='lines', line=dict(color='red', dash='dash', width=2),
+                                 name=f"+Log2FC soglia ({fold_change_threshold})"))
+
+        fig.add_trace(go.Scatter(x=[x_min, x_max], 
+                                 y=[p_value_threshold, p_value_threshold], 
+                                 mode='lines', line=dict(color='blue', dash='dash', width=2),
+                                 name=f"Soglia -log10(p-value) ({p_value_threshold})"))
+
+        fig.add_trace(go.Scatter(x=[0, 0], 
+                                 y=[0, y_max], 
+                                 mode='lines', line=dict(color='lightgray', dash='dash', width=1.5),
+                                 name="Log2FC = 0"))
+
         st.plotly_chart(fig)
         st.write("✅ Volcano Plot generato con successo!")
     except Exception as e:
