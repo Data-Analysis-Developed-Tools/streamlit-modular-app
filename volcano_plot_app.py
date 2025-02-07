@@ -21,7 +21,14 @@ def mostra_volcano_plot():
     if None in classi or len(classi) < 2:
         st.error("⚠️ Le classi non sono state selezionate correttamente.")
         return
-    st.write(f"📊 Generazione Volcano Plot per classi: {classi}")
+    
+    # **Mostriamo le etichette delle classi sopra il grafico**
+    st.markdown(f"""
+    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+        <h3 style="color: red; text-align: left;">🔴 Over-expression in {classi[1]}</h3>
+        <h3 style="color: green; text-align: right;">🟢 Over-expression in {classi[0]}</h3>
+    </div>
+    """, unsafe_allow_html=True)
 
     # Recupera i parametri impostati nella sidebar
     fold_change_threshold = st.session_state.get("fold_change_threshold", 0.0)
@@ -60,7 +67,7 @@ def mostra_volcano_plot():
 
     # Aggiungiamo margini proporzionali ai valori reali
     x_margin = abs(x_max_raw - x_min_raw) * 0.1  
-    y_margin = y_max_raw * 0.3  # **🔹 30% in più per lasciare spazio alle etichette**
+    y_margin = y_max_raw * 0.3  
 
     x_min = min(x_min_raw, -fold_change_threshold * 1.2) - x_margin
     x_max = max(x_max_raw, fold_change_threshold * 1.2) + x_margin
@@ -79,7 +86,7 @@ def mostra_volcano_plot():
             xaxis=dict(range=[x_min, x_max]),
             yaxis=dict(range=[0, y_max]),  
             height=1000,
-            margin=dict(l=150, r=150, t=200, b=100)  # **🔹 Maggiore margine sopra**
+            margin=dict(l=150, r=150, t=200, b=100)
         )
 
         # Linee di soglia Log2FoldChange
@@ -104,26 +111,6 @@ def mostra_volcano_plot():
                                  y=[0, y_max], 
                                  mode='lines', line=dict(color='lightgray', dash='dash', width=1.5),
                                  name="Log2FC = 0"))
-
-        # **Aggiunta delle etichette delle classi sopra il grafico**
-        fig.add_annotation(
-            x=x_min, y=y_max + (y_max * 0.02), 
-            text=f"🔴 Over-expression in {classi[1]}",
-            showarrow=False, font=dict(color="red", size=20, family="Arial", weight="bold"),
-            bgcolor="rgba(255,255,255,0.8)", bordercolor="black",
-            xanchor='left'
-        )
-
-        fig.add_annotation(
-            x=x_max, y=y_max + (y_max * 0.02), 
-            text=f"🟢 Over-expression in {classi[0]}",
-            showarrow=False, font=dict(color="green", size=20, family="Arial", weight="bold"),
-            bgcolor="rgba(255,255,255,0.8)", bordercolor="black",
-            xanchor='right'
-        )
-
-        # **Forziamo un refresh della vista per evitare che le etichette spariscano**
-        fig.update_layout(autosize=True)
 
         st.plotly_chart(fig)
         st.write("✅ Volcano Plot generato con successo!")
