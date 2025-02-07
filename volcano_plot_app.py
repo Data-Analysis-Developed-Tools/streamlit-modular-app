@@ -58,12 +58,15 @@ def mostra_volcano_plot():
     else:
         dati_preparati["SizeScaled"] = 0.0001  
 
-    # Determina i limiti della scala in base ai dati filtrati
-    x_min = min(dati_preparati['Log2FoldChange'].min(), -fold_change_threshold * 1.2)
-    x_max = max(dati_preparati['Log2FoldChange'].max(), fold_change_threshold * 1.2)
-    y_max = max(dati_preparati['-log10(p-value)'].max(), p_value_threshold * 1.2)
+    # Determina i limiti della scala in base ai dati filtrati e aggiunge margini extra
+    x_margin = 0.2  # Margine aggiuntivo per evitare tagli laterali
+    y_margin = 1.2  # Margine extra sopra il massimo valore di -log10(p-value)
 
-    # Generazione del Volcano Plot
+    x_min = min(dati_preparati['Log2FoldChange'].min(), -fold_change_threshold * 1.2) - x_margin
+    x_max = max(dati_preparati['Log2FoldChange'].max(), fold_change_threshold * 1.2) + x_margin
+    y_max = max(dati_preparati['-log10(p-value)'].max(), p_value_threshold * 1.2) * y_margin
+
+    # Generazione del Volcano Plot con margini extra
     try:
         fig = px.scatter(dati_preparati, x='Log2FoldChange', y='-log10(p-value)', 
                          text='Variabile' if show_labels else None,
@@ -75,7 +78,8 @@ def mostra_volcano_plot():
         fig.update_layout(
             xaxis=dict(range=[x_min, x_max]),
             yaxis=dict(range=[0, y_max]),  
-            height=1000  
+            height=1000,
+            margin=dict(l=100, r=100, t=100, b=100)  # 🔥 Aggiunti margini extra
         )
 
         # Linee di soglia Log2FoldChange
@@ -102,13 +106,13 @@ def mostra_volcano_plot():
                                  name="Log2FC = 0"))
 
         # **Aggiunta delle etichette delle classi**
-        fig.add_annotation(x=x_min, y=y_max * 1.1, 
+        fig.add_annotation(x=x_min, y=y_max * 1.05, 
                            text=f"Over-expression in {classi[1]}", 
                            showarrow=False, font=dict(color="red", size=18, family="Arial"),
                            bgcolor="rgba(255,255,255,0.7)", bordercolor="black",
                            xanchor='left')
 
-        fig.add_annotation(x=x_max, y=y_max * 1.1, 
+        fig.add_annotation(x=x_max, y=y_max * 1.05, 
                            text=f"Over-expression in {classi[0]}", 
                            showarrow=False, font=dict(color="green", size=18, family="Arial"),
                            bgcolor="rgba(255,255,255,0.7)", bordercolor="black",
