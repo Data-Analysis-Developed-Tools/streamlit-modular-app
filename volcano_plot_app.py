@@ -36,7 +36,7 @@ def mostra_volcano_plot():
     if size_by_media:
         n_base = st.sidebar.slider("Scegli la base dell'esponenziale (n)", min_value=1, max_value=25, value=10)
     else:
-        n_base = None  # Se l'opzione non è attivata, nessuna base è usata
+        n_base = None  
 
     st.write(f"📊 Soglie impostate: Log2FC={fold_change_threshold}, -log10(p-value)={p_value_threshold}")
 
@@ -52,18 +52,18 @@ def mostra_volcano_plot():
         st.error("⚠️ Il dataframe 'dati_preparati' è vuoto! Controlla i parametri di filtraggio.")
         return
 
-    # **Modifica**: Calcolo della dimensione dei punti con n^MediaLog se l'opzione è attivata
+    # Calcolo della dimensione dei punti con n^MediaLog se l'opzione è attivata
     if size_by_media and n_base is not None:
         dati_preparati["SizeScaled"] = np.power(n_base, dati_preparati["MediaLog"])  # n^MediaLog
     else:
-        dati_preparati["SizeScaled"] = 0.0001  # Imposta un valore piccolo per avere punti simili alle etichette
+        dati_preparati["SizeScaled"] = 0.0001  
 
     # Determina i limiti della scala in base ai dati filtrati
     x_min = min(dati_preparati['Log2FoldChange'].min(), -fold_change_threshold * 1.2)
     x_max = max(dati_preparati['Log2FoldChange'].max(), fold_change_threshold * 1.2)
     y_max = max(dati_preparati['-log10(p-value)'].max(), p_value_threshold * 1.2)
 
-    # Generazione del Volcano Plot con altezza raddoppiata
+    # Generazione del Volcano Plot con altezza modificata e asse y normale
     try:
         fig = px.scatter(dati_preparati, x='Log2FoldChange', y='-log10(p-value)', 
                          text='Variabile' if show_labels else None,
@@ -74,8 +74,8 @@ def mostra_volcano_plot():
 
         fig.update_layout(
             xaxis=dict(range=[x_min, x_max]),
-            yaxis=dict(range=[0, y_max]),
-            height=1400  # 🔥 **Raddoppia l'altezza del grafico**
+            yaxis=dict(range=[0, y_max]),  # 🔥 **Mantiene l'asse y normale**
+            height=1000  # 🔥 **Modificata l'altezza a 1000 pixel**
         )
 
         # Linee di soglia Log2FoldChange
