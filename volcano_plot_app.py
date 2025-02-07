@@ -68,7 +68,7 @@ def mostra_volcano_plot():
 
     # Aggiungiamo margini proporzionali ai valori reali
     x_margin = abs(x_max_raw - x_min_raw) * 0.1  
-    y_margin = y_max_raw * 0.1  
+    y_margin = y_max_raw * 0.01  
 
     x_min = min(x_min_raw, -fold_change_threshold * 1.2) - x_margin
     x_max = max(x_max_raw, fold_change_threshold * 1.2) + x_margin
