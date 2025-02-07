@@ -24,15 +24,12 @@ def mostra_volcano_plot():
     st.write(f"📊 Generazione Volcano Plot per classi: {classi}")
 
     # Recupera i parametri impostati nella sidebar
-    default_fold_change = 0.0
-    default_p_value = 0.05
-    fold_change_threshold = st.session_state.get("fold_change_threshold", default_fold_change)
-    p_value_threshold = st.session_state.get("p_value_threshold", default_p_value)
+    fold_change_threshold = st.session_state.get("fold_change_threshold", 0.0)
+    p_value_threshold = st.session_state.get("p_value_threshold", 0.05)
     show_labels = st.sidebar.checkbox("Mostra etichette delle variabili", value=True)
     size_by_media = st.sidebar.checkbox("Dimensiona punti per media valori (n^MediaLog)", value=False)
     color_by_media = st.sidebar.checkbox("Colora punti per media valori", value=False)
 
-    # Se "Dimensiona punti per media valori" è attivato, mostra il cursore per scegliere la base dell'esponenziale
     if size_by_media:
         n_base = st.sidebar.slider("Scegli la base dell'esponenziale (n)", min_value=1, max_value=25, value=10)
     else:
@@ -52,23 +49,22 @@ def mostra_volcano_plot():
         st.error("⚠️ Il dataframe 'dati_preparati' è vuoto! Controlla i parametri di filtraggio.")
         return
 
-    # Calcolo della dimensione dei punti con n^MediaLog se l'opzione è attivata
     if size_by_media and n_base is not None:
-        dati_preparati["SizeScaled"] = np.power(n_base, dati_preparati["MediaLog"])  # n^MediaLog
+        dati_preparati["SizeScaled"] = np.power(n_base, dati_preparati["MediaLog"])
     else:
         dati_preparati["SizeScaled"] = 0.0001  
 
-    # **Calcoliamo i limiti effettivi della scala**
+    # Calcoliamo i limiti effettivi della scala
     x_min_raw, x_max_raw = dati_preparati['Log2FoldChange'].min(), dati_preparati['Log2FoldChange'].max()
     y_max_raw = dati_preparati['-log10(p-value)'].max()
 
-    # **Aggiungiamo margini basati sui valori reali**
-    x_margin = abs(x_max_raw - x_min_raw) * 0.1  # 10% di margine laterale
-    y_margin = y_max_raw * 0.2  # 20% di margine sopra
+    # Aggiungiamo margini proporzionali ai valori reali
+    x_margin = abs(x_max_raw - x_min_raw) * 0.1  
+    y_margin = y_max_raw * 0.2  
 
     x_min = min(x_min_raw, -fold_change_threshold * 1.2) - x_margin
     x_max = max(x_max_raw, fold_change_threshold * 1.2) + x_margin
-    y_max = y_max_raw + y_margin  # Margine sopra il valore massimo
+    y_max = y_max_raw + y_margin  
 
     # Generazione del Volcano Plot con margini calcolati dinamicamente
     try:
@@ -83,7 +79,7 @@ def mostra_volcano_plot():
             xaxis=dict(range=[x_min, x_max]),
             yaxis=dict(range=[0, y_max]),  
             height=1000,
-            margin=dict(l=150, r=150, t=150, b=100)  # 🔥 Aggiunti margini extra dinamici
+            margin=dict(l=150, r=150, t=150, b=100)
         )
 
         # Linee di soglia Log2FoldChange
@@ -103,24 +99,28 @@ def mostra_volcano_plot():
                                  mode='lines', line=dict(color='blue', dash='dash', width=2),
                                  name=f"Soglia -log10(p-value) ({p_value_threshold})"))
 
-        # Aggiunta della linea verticale grigio chiaro a x=0 (asse Log2FoldChange)
+        # Aggiunta della linea verticale grigio chiaro a x=0
         fig.add_trace(go.Scatter(x=[0, 0], 
                                  y=[0, y_max], 
                                  mode='lines', line=dict(color='lightgray', dash='dash', width=1.5),
                                  name="Log2FC = 0"))
 
-        # **Aggiunta delle etichette delle classi**
-        fig.add_annotation(x=x_min, y=y_max + (y_max * 0.05), 
-                           text=f"Over-expression in {classi[1]}", 
-                           showarrow=False, font=dict(color="red", size=18, family="Arial"),
-                           bgcolor="rgba(255,255,255,0.7)", bordercolor="black",
-                           xanchor='left')
+        # **Aggiunta delle etichette delle classi sopra il grafico**
+        fig.add_annotation(
+            x=x_min, y=y_max + (y_max * 0.05),
+            text=f"Over-expression in {classi[1]}",
+            showarrow=False, font=dict(color="red", size=18, family="Arial"),
+            bgcolor="rgba(255,255,255,0.7)", bordercolor="black",
+            xanchor='left'
+        )
 
-        fig.add_annotation(x=x_max, y=y_max + (y_max * 0.05), 
-                           text=f"Over-expression in {classi[0]}", 
-                           showarrow=False, font=dict(color="green", size=18, family="Arial"),
-                           bgcolor="rgba(255,255,255,0.7)", bordercolor="black",
-                           xanchor='right')
+        fig.add_annotation(
+            x=x_max, y=y_max + (y_max * 0.05),
+            text=f"Over-expression in {classi[0]}",
+            showarrow=False, font=dict(color="green", size=18, family="Arial"),
+            bgcolor="rgba(255,255,255,0.7)", bordercolor="black",
+            xanchor='right'
+        )
 
         st.plotly_chart(fig)
         st.write("✅ Volcano Plot generato con successo!")
