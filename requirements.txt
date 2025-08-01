@@ -9,3 +9,4 @@ kaleido
 xlsxwriter
 seaborn
 setuptools
+plotly.express
