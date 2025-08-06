@@ -76,12 +76,21 @@ def mostra_volcano_plot():
 
     # Generazione del Volcano Plot con margini calcolati dinamicamente
     try:
-        fig = px.scatter(dati_preparati, x='Log2FoldChange', y='-log10(p-value)', 
-                         text='Variabile' if show_labels else None,
-                         hover_data=['Variabile'],
-                         color=dati_preparati['MediaLog'] if color_by_media else None,
-                         size=dati_preparati['SizeScaled'],
-                         color_continuous_scale='RdYlBu_r', size_max=10)
+        fig = px.scatter(
+            dati_preparati,
+            x='Log2FoldChange',
+            y='-log10(p-value)',
+            text='Variabile' if show_labels else None,
+            hover_data=['Variabile'],
+            color=dati_preparati['MediaLog'] if color_by_media else None,
+            size=dati_preparati['SizeScaled'],
+            color_continuous_scale='RdYlBu_r',
+            size_max=10
+        )
+
+        # 👉 Imposta posizione del testo se le etichette sono abilitate
+        if show_labels:
+            fig.update_traces(textposition='top center')
 
         fig.update_layout(
             xaxis=dict(range=[x_min, x_max]),
