@@ -44,8 +44,8 @@ if file is not None:
         # ✅ Legge il file saltando le prime 2 righe e copia la prima colonna come "etichette"
         dati = pd.read_excel(file, skiprows=2)
         dati.insert(0, "etichette", dati.iloc[:, 0])  # 👈 colonna per etichette
-# ✅ Estrae le classi in modo sicuro, compatibile con intestazioni a 1 o 2 livelli
-if isinstance(dati.columns, pd.MultiIndex):
+        # ✅ Estrae le classi in modo sicuro, compatibile con intestazioni a 1 o 2 livelli
+    if isinstance(dati.columns, pd.MultiIndex):
     classi_con_duplicate = dati.columns.get_level_values(1).tolist()
 else:
     classi_con_duplicate = dati.columns.tolist()[1:]  # esclude la colonna "etichette"
