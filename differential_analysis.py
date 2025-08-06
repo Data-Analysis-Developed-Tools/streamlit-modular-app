@@ -5,8 +5,6 @@ import re  # 📌 Libreria per rimuovere i suffissi numerici
 # 🚀 `st.set_page_config()` deve essere la PRIMA istruzione eseguita
 st.set_page_config(page_title="Analisi Dati - Volcano Plot e Tabella", layout="wide")
 
-from components.data_loader import carica_dati
-
 # 🚀 Importiamo i moduli solo quando servono, evitando problemi
 try:
     from volcano_plot_app import mostra_volcano_plot
@@ -25,7 +23,7 @@ except Exception as e:
     st.error(f"❌ Errore nell'import di mostra_tabella: {e}")
    
     # Definisce una funzione vuota alternativa, così non va in crash
-    def mostra_volcano_plot():
+    def mostra_tabella():
         st.error("❌ La funzione `mostra_tabella()` non è disponibile.")
         
 # Sidebar - Caricamento file
@@ -43,7 +41,10 @@ st.write(f"🔍 Valori soglia selezionati - Log2FC: {st.session_state['fold_chan
 # Controllo se il file è stato caricato
 if file is not None:
     if "file_name" not in st.session_state or st.session_state["file_name"] != file.name:
-        dati, classi_con_duplicate = carica_dati(file)
+        # ✅ Legge il file saltando le prime 2 righe e copia la prima colonna come "etichette"
+        dati = pd.read_excel(file, skiprows=2)
+        dati.insert(0, "etichette", dati.iloc[:, 0])  # 👈 colonna per etichette
+        classi_con_duplicate = dati.columns.get_level_values(1).tolist()
 
         # **📌 Rimuove i suffissi numerici (.1, .2, .3, ecc.) per evitare classi duplicate**
         classi_pulite = [re.sub(r'\.\d+$', '', classe) for classe in classi_con_duplicate]
