@@ -56,8 +56,16 @@ def mostra_volcano_plot():
     else:
         dati_preparati["SizeScaled"] = 0.0001
 
-    # ✅ Forziamo che la colonna delle etichette sia stringa
+    # ✅ Etichette sempre trattate come stringhe
     dati_preparati["EtichettaVariabile"] = dati_preparati.iloc[:, 0].astype(str)
+
+    # ✅ Mostra etichette solo per i punti significativi
+    dati_preparati["MostraEtichetta"] = np.where(
+        (abs(dati_preparati["Log2FoldChange"]) >= fold_change_threshold) &
+        (dati_preparati["-log10(p-value)"] >= p_value_threshold),
+        dati_preparati["EtichettaVariabile"],
+        ""
+    )
 
     x_min_raw, x_max_raw = dati_preparati['Log2FoldChange'].min(), dati_preparati['Log2FoldChange'].max()
     y_max_raw = dati_preparati['-log10(p-value)'].max()
@@ -72,7 +80,7 @@ def mostra_volcano_plot():
             dati_preparati,
             x='Log2FoldChange',
             y='-log10(p-value)',
-            text='EtichettaVariabile' if show_labels else None,
+            text='MostraEtichetta' if show_labels else None,
             hover_data=['EtichettaVariabile'],
             color=dati_preparati['MediaLog'] if color_by_media else None,
             size=dati_preparati['SizeScaled'],
@@ -85,7 +93,6 @@ def mostra_volcano_plot():
                 textposition='top center',
                 textfont=dict(size=8, color='black'),
                 mode='markers+text'
-                # ⚠️ textbgcolor non supportato in Plotly Express
             )
 
         fig.update_layout(
