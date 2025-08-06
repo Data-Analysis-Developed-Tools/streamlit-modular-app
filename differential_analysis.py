@@ -52,7 +52,7 @@ if file is not None:
             classi_con_duplicate = dati.columns.tolist()[1:]  # esclude la colonna "etichette"
 
         # **📌 Rimuove i suffissi numerici (.1, .2, .3, ecc.) per evitare classi duplicate**
-        classi_pulite = [re.sub(r'\.\d+$', '', classe) for classe in classi_con_duplicate]
+        classi_pulite = [re.sub(r'\.\d+$', '', str(classe)) for classe in classi_con_duplicate]
 
         # **Rimuove eventuali duplicati causati dai suffissi**
         classi_uniche = list(set(classi_pulite))
