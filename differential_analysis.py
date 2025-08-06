@@ -25,7 +25,7 @@ except Exception as e:
     # Definisce una funzione vuota alternativa, così non va in crash
     def mostra_tabella():
         st.error("❌ La funzione `mostra_tabella()` non è disponibile.")
-        
+
 # Sidebar - Caricamento file
 st.sidebar.title("📂 Caricamento Dati")
 file = st.sidebar.file_uploader("Carica il file Excel", type=['xlsx'])
@@ -51,10 +51,10 @@ if file is not None:
         else:
             classi_con_duplicate = dati.columns.tolist()[1:]  # esclude la colonna "etichette"
 
-        # **📌 Rimuove i suffissi numerici (.1, .2, .3, ecc.) per evitare classi duplicate**
-        classi_pulite = [re.sub(r'\.\d+$', '', classe) for classe in classi_con_duplicate]
+        # 📌 Rimuove i suffissi numerici (.1, .2, ecc.) per evitare classi duplicate
+        classi_pulite = [re.sub(r'\.\d+$', '', str(classe)) for classe in classi_con_duplicate]
 
-        # **Rimuove eventuali duplicati causati dai suffissi**
+        # 📌 Rimuove eventuali duplicati causati dai suffissi
         classi_uniche = list(set(classi_pulite))
 
         if dati is not None and len(classi_uniche) > 1:
@@ -74,8 +74,12 @@ if file is not None:
 
         if st.sidebar.button("✅ Conferma selezione"):
             if class_1 and class_2 and class_1 != class_2:
-                dati_filtrati = st.session_state["dati_completi"].loc[:, 
-                    st.session_state["dati_completi"].columns.get_level_values(1).isin([class_1, class_2])]
+                try:
+                    dati_filtrati = st.session_state["dati_completi"].loc[:, 
+                        st.session_state["dati_completi"].columns.get_level_values(1).isin([class_1, class_2])]
+                except:
+                    dati_filtrati = st.session_state["dati_completi"].loc[:, 
+                        st.session_state["dati_completi"].columns.isin([class_1, class_2])]
 
                 st.session_state["dati_filtrati"] = dati_filtrati
                 st.session_state["class_1"] = class_1
