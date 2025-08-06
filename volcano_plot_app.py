@@ -80,14 +80,13 @@ def mostra_volcano_plot():
             size_max=10
         )
 
-            if show_labels:
+        if show_labels:
             fig.update_traces(
-            textposition='top center',
-            textfont=dict(size=8, color='black'),
-            mode='markers+text',
-            textbgcolor='rgba(0,0,0,0)'  # Sfondo completamente trasparente
-        )
-
+                textposition='top center',
+                textfont=dict(size=8, color='black'),
+                mode='markers+text'
+                # ⚠️ textbgcolor non supportato in Plotly Express
+            )
 
         fig.update_layout(
             xaxis=dict(range=[x_min, x_max]),
