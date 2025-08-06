@@ -44,10 +44,8 @@ def mostra_volcano_plot():
         st.error("⚠️ Il dataframe 'dati_preparati' è vuoto! Controlla i parametri di filtraggio.")
         return
 
-    # Verifica che esista la colonna "etichette"
-    if "etichette" not in dati_preparati.columns:
-        st.error("❌ La colonna 'etichette' non è presente nei dati.")
-        return
+    # Usa 'etichette' se presente, altrimenti None
+    usa_etichette = "etichette" in dati_preparati.columns and show_labels
 
     st.markdown(f"""
     <div style="display: flex; justify-content: space-between; margin-bottom: 12px; margin-top: 10px;">
@@ -74,15 +72,15 @@ def mostra_volcano_plot():
             dati_preparati,
             x='Log2FoldChange',
             y='-log10(p-value)',
-            text='etichette' if show_labels else None,
-            hover_data=['etichette'],
+            text='etichette' if usa_etichette else None,
+            hover_data=['etichette'] if "etichette" in dati_preparati.columns else None,
             color=dati_preparati['MediaLog'] if color_by_media else None,
             size=dati_preparati['SizeScaled'],
             color_continuous_scale='RdYlBu_r',
             size_max=10
         )
 
-        if show_labels:
+        if usa_etichette:
             fig.update_traces(
                 textposition='top center',
                 mode='markers+text',
