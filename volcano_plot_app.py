@@ -20,7 +20,8 @@ def mostra_volcano_plot():
         return
 
     fold_change_threshold = st.session_state.get("fold_change_threshold", 0.0)
-    p_value_threshold = st.session_state.get("p_value_threshold", 0.05)
+    p_value_threshold = st.session_state.get("p_value_threshold", 0.0)
+
     show_labels = st.sidebar.checkbox("Mostra etichette delle variabili", value=True)
     size_by_media = st.sidebar.checkbox("Dimensiona punti per media valori (n^MediaLog)", value=False)
     color_by_media = st.sidebar.checkbox("Colora punti per media valori", value=False)
@@ -32,61 +33,50 @@ def mostra_volcano_plot():
 
     st.write(f"📊 Soglie impostate: Log2FC={fold_change_threshold}, -log10(p-value)={p_value_threshold}")
 
+    # Calcolo dei valori statistici
     try:
-        # Prepara i dati calcolando log2FC e -log10(p-value)
-        # Dati in input devono avere colonne con class_1 e class_2
-        class_1 = classi[0]
-        class_2 = classi[1]
+        medie = dati.groupby(level=1, axis=1).mean()
+        media_log = medie.mean(axis=1)
+        class_1, class_2 = classi
+        fc = medie[class_2] - medie[class_1]
+        p_valori = dati.apply(lambda row: t_test(row, class_1, class_2, dati.columns), axis=1)
+        log2fc = fc
+        neg_log10_p = -np.log10(p_valori)
 
-        media_1 = dati.xs(class_1, axis=1, level=1).mean(axis=1)
-        media_2 = dati.xs(class_2, axis=1, level=1).mean(axis=1)
-
-        log2fc = np.log2(media_2 / media_1)
-        p_values = []
-        from scipy.stats import ttest_ind
-
-        for i in range(dati.shape[0]):
-            gruppo1 = dati.xs(class_1, axis=1, level=1).iloc[i, :]
-            gruppo2 = dati.xs(class_2, axis=1, level=1).iloc[i, :]
-            _, p_val = ttest_ind(gruppo1, gruppo2, equal_var=False)
-            p_values.append(p_val)
-
-        df = pd.DataFrame({
+        df_plot = pd.DataFrame({
             "Log2FoldChange": log2fc,
-            "-log10(p-value)": -np.log10(p_values),
-            "MediaLog": np.log10((media_1 + media_2) / 2 + 1e-8),
-            "etichette": dati.index.astype(str)  # 👈 usa l'indice come etichette (cioè i nomi delle variabili)
+            "-log10(p-value)": neg_log10_p,
+            "MediaLog": media_log
         })
 
-        st.success("✅ Dati elaborati correttamente.")
+        # 🔧 Usa la prima colonna del DataFrame originale per le etichette (come stringa)
+        etichette = dati.index.astype(str)
+        df_plot["Etichetta"] = etichette
     except Exception as e:
-        st.error(f"❌ Errore durante la preparazione dei dati: {e}")
+        st.error(f"❌ Errore in prepara_dati: {e}")
         return
 
-    # Aggiunge la colonna SizeScaled per il dimensionamento dei punti
     if size_by_media and n_base is not None:
-        df["SizeScaled"] = np.power(n_base, df["MediaLog"])
+        df_plot["SizeScaled"] = np.power(n_base, df_plot["MediaLog"])
     else:
-        df["SizeScaled"] = 0.0001
+        df_plot["SizeScaled"] = 0.0001  # minimo per rendere visibili i punti
 
-    # Imposta i margini
-    x_min_raw, x_max_raw = df['Log2FoldChange'].min(), df['Log2FoldChange'].max()
-    y_max_raw = df['-log10(p-value)'].max()
+    x_min_raw, x_max_raw = df_plot['Log2FoldChange'].min(), df_plot['Log2FoldChange'].max()
+    y_max_raw = df_plot['-log10(p-value)'].max()
     x_margin = abs(x_max_raw - x_min_raw) * 0.1
     y_margin = y_max_raw * 0.01
     x_min = min(x_min_raw, -fold_change_threshold * 1.2) - x_margin
     x_max = max(x_max_raw, fold_change_threshold * 1.2) + x_margin
     y_max = y_max_raw + y_margin
 
-    # Crea Volcano Plot
     fig = px.scatter(
-        df,
+        df_plot,
         x='Log2FoldChange',
         y='-log10(p-value)',
-        text=df["etichette"] if show_labels else None,
-        hover_data=['etichette'],
-        color=df['MediaLog'] if color_by_media else None,
-        size=df['SizeScaled'],
+        text='Etichetta' if show_labels else None,
+        hover_data=['Etichetta'],
+        color=df_plot['MediaLog'] if color_by_media else None,
+        size=df_plot['SizeScaled'],
         color_continuous_scale='RdYlBu_r',
         size_max=10
     )
@@ -94,8 +84,8 @@ def mostra_volcano_plot():
     if show_labels:
         fig.update_traces(
             textposition='top center',
-            mode='markers+text',
-            textfont=dict(size=8)  # 👈 Etichette con font piccolo
+            textfont=dict(size=8),
+            mode='markers+text'
         )
 
     fig.update_layout(
@@ -105,7 +95,6 @@ def mostra_volcano_plot():
         margin=dict(l=150, r=150, t=200, b=100)
     )
 
-    # Linee di soglia
     fig.add_trace(go.Scatter(x=[-fold_change_threshold, -fold_change_threshold],
                              y=[0, y_max],
                              mode='lines', line=dict(color='red', dash='dash', width=2),
@@ -128,10 +117,10 @@ def mostra_volcano_plot():
 
     st.plotly_chart(fig)
 
-    # 📋 Mostra tabella dei dati significativi
-    dati_significativi = df[
-        (abs(df["Log2FoldChange"]) >= fold_change_threshold) &
-        (df["-log10(p-value)"] >= p_value_threshold)
+    # Tabella dei dati significativi
+    dati_significativi = df_plot[
+        (abs(df_plot["Log2FoldChange"]) >= fold_change_threshold) &
+        (df_plot["-log10(p-value)"] >= p_value_threshold)
     ]
 
     if not dati_significativi.empty:
@@ -139,3 +128,10 @@ def mostra_volcano_plot():
         st.dataframe(dati_significativi.sort_values("-log10(p-value)", ascending=False))
     else:
         st.info("🔹 Nessuna variabile supera entrambe le soglie selezionate.")
+
+# Funzione per t-test (esempio semplificato, da sostituire con analisi reale)
+def t_test(row, class_1, class_2, columns):
+    from scipy.stats import ttest_ind
+    idx_1 = [col for col in columns if col[1] == class_1]
+    idx_2 = [col for col in columns if col[1] == class_2]
+    return ttest_ind(row[idx_1], row[idx_2], equal_var=False).pvalue
