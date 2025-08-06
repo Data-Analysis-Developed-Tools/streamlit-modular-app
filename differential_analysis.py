@@ -13,18 +13,12 @@ try:
     st.write("✅ Importazione di mostra_volcano_plot avvenuta con successo.")
 except Exception as e:
     st.error(f"❌ Errore nell'import di mostra_volcano_plot: {e}")
-    def mostra_volcano_plot():
-        st.error("❌ La funzione `mostra_volcano_plot()` non è disponibile.")
-
 
 try:
     from table_app import mostra_tabella
     st.write("✅ Importazione di mostra_tabella avvenuta con successo.")
 except Exception as e:
     st.error(f"❌ Errore nell'import di mostra_tabella: {e}")
-    def mostra_tabella():
-        st.error("❌ La funzione `mostra_tabella()` non è disponibile.")
-
 
 # Sidebar - Caricamento file
 st.sidebar.title("📂 Caricamento Dati")
