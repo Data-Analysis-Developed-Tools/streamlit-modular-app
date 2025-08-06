@@ -69,24 +69,29 @@ def mostra_volcano_plot():
     x_max = max(x_max_raw, fold_change_threshold * 1.2) + x_margin
     y_max = y_max_raw + y_margin
 
-    fig = px.scatter(
-        df_plot,
-        x='Log2FoldChange',
-        y='-log10(p-value)',
-        text='Etichetta' if show_labels else None,
-        hover_data=['Etichetta'],
-        color=df_plot['MediaLog'] if color_by_media else None,
-        size=df_plot['SizeScaled'],
-        color_continuous_scale='RdYlBu_r',
-        size_max=10
+# Assicura che la colonna delle etichette sia trattata come stringa
+dati_preparati["EtichettaVariabile"] = dati_preparati.iloc[:, 0].astype(str)
+
+fig = px.scatter(
+    dati_preparati,
+    x='Log2FoldChange',
+    y='-log10(p-value)',
+    text='EtichettaVariabile' if show_labels else None,
+    hover_data=['EtichettaVariabile'],
+    color=dati_preparati['MediaLog'] if color_by_media else None,
+    size=dati_preparati['SizeScaled'],
+    color_continuous_scale='RdYlBu_r',
+    size_max=10
+)
+
+
+if show_labels:
+    fig.update_traces(
+        textposition='top center',
+        textfont=dict(size=8),
+        mode='markers+text'  # 🔥 necessario per rendere visibili le etichette
     )
 
-    if show_labels:
-        fig.update_traces(
-            textposition='top center',
-            textfont=dict(size=8),
-            mode='markers+text'
-        )
 
     fig.update_layout(
         xaxis=dict(range=[x_min, x_max]),
