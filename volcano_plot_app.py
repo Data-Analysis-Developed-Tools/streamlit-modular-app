@@ -86,14 +86,14 @@ def mostra_volcano_plot():
             size=dati_preparati['SizeScaled'],
             color_continuous_scale='RdYlBu_r',
             size_max=10
+    if show_labels:
+        fig.update_traces(
+        textposition='top center',
+        textfont=dict(size=12, color='red'),
+        marker=dict(size=12, color='black'),
+        mode='markers+text'
         )
 
-        if show_labels:
-            fig.update_traces(
-                textposition='top center',
-                textfont=dict(size=8, color='black'),
-                mode='markers+text'
-            )
 
         fig.update_layout(
             xaxis=dict(range=[x_min, x_max]),
