@@ -69,12 +69,15 @@ def mostra_volcano_plot():
     y_max = y_max_raw + y_margin
 
     try:
+        # ✅ Forziamo che la colonna 'Variabile' sia stringa, per sicurezza
+        dati_preparati['Variabile'] = dati_preparati['Variabile'].astype(str)
+
         fig = px.scatter(
             dati_preparati,
             x='Log2FoldChange',
             y='-log10(p-value)',
-            text='EtichettaVariabile' if show_labels else None,
-            hover_data=['EtichettaVariabile'] if show_labels else ['Log2FoldChange', '-log10(p-value)'],
+            text=dati_preparati['Variabile'] if show_labels else None,  # ← 👈 PASSA LA COLONNA DIRETTAMENTE
+            hover_data=['Variabile'],
             color=dati_preparati['MediaLog'] if color_by_media else None,
             size=dati_preparati['SizeScaled'],
             color_continuous_scale='RdYlBu_r',
