@@ -39,7 +39,7 @@ def mostra_volcano_plot():
     # Prepara i dati per il Volcano Plot
     try:
         dati_preparati = prepara_dati(dati, classi, fold_change_threshold, p_value_threshold)
-        st.success("✅ Funzione `prepara_dati` eseguita correttamente.")  
+        st.success("✅ Funzione `prepara_dati` eseguita correttamente.")  # 🔥 Conferma prima delle etichette
     except Exception as e:
         st.error(f"❌ Errore in `prepara_dati`: {e}")
         return
@@ -48,7 +48,7 @@ def mostra_volcano_plot():
         st.error("⚠️ Il dataframe 'dati_preparati' è vuoto! Controlla i parametri di filtraggio.")
         return
 
-    # **Etichette per le classi**
+    # **🔽 Ora le etichette delle classi vengono visualizzate QUI, sotto la conferma**
     st.markdown(f"""
     <div style="display: flex; justify-content: space-between; margin-bottom: 12px; margin-top: 10px;">
         <h3 style="color: red; text-align: left;">🔴 Over-expression in {classi[1]}</h3>
@@ -56,7 +56,7 @@ def mostra_volcano_plot():
     </div>
     """, unsafe_allow_html=True)
 
-    # **Generazione del Volcano Plot**
+    # **Ora generiamo il Volcano Plot**
     if size_by_media and n_base is not None:
         dati_preparati["SizeScaled"] = np.power(n_base, dati_preparati["MediaLog"])
     else:
@@ -66,6 +66,7 @@ def mostra_volcano_plot():
     x_min_raw, x_max_raw = dati_preparati['Log2FoldChange'].min(), dati_preparati['Log2FoldChange'].max()
     y_max_raw = dati_preparati['-log10(p-value)'].max()
 
+    # Aggiungiamo margini proporzionali ai valori reali
     x_margin = abs(x_max_raw - x_min_raw) * 0.1  
     y_margin = y_max_raw * 0.01  
 
@@ -73,6 +74,7 @@ def mostra_volcano_plot():
     x_max = max(x_max_raw, fold_change_threshold * 1.2) + x_margin
     y_max = y_max_raw + y_margin  
 
+    # Generazione del Volcano Plot con margini calcolati dinamicamente
     try:
         fig = px.scatter(dati_preparati, x='Log2FoldChange', y='-log10(p-value)', 
                          text='Variabile' if show_labels else None,
@@ -88,7 +90,7 @@ def mostra_volcano_plot():
             margin=dict(l=150, r=150, t=200, b=100)
         )
 
-        # **Ripristino delle linee di soglia**
+        # Linee di soglia Log2FoldChange
         fig.add_trace(go.Scatter(x=[-fold_change_threshold, -fold_change_threshold], 
                                  y=[0, y_max], 
                                  mode='lines', line=dict(color='red', dash='dash', width=2),
@@ -99,11 +101,13 @@ def mostra_volcano_plot():
                                  mode='lines', line=dict(color='red', dash='dash', width=2),
                                  name=f"+Log2FC soglia ({fold_change_threshold})"))
 
+        # Linea di soglia -log10(p-value)
         fig.add_trace(go.Scatter(x=[x_min, x_max], 
                                  y=[p_value_threshold, p_value_threshold], 
                                  mode='lines', line=dict(color='blue', dash='dash', width=2),
                                  name=f"Soglia -log10(p-value) ({p_value_threshold})"))
 
+        # Aggiunta della linea verticale grigio chiaro a x=0
         fig.add_trace(go.Scatter(x=[0, 0], 
                                  y=[0, y_max], 
                                  mode='lines', line=dict(color='lightgray', dash='dash', width=1.5),
@@ -113,17 +117,3 @@ def mostra_volcano_plot():
         st.write("✅ Volcano Plot generato con successo!")
     except Exception as e:
         st.error(f"❌ Errore durante la generazione del Volcano Plot: {e}")
-
-    # **Aggiunta della tabella con i criteri di filtraggio originali**
-    st.subheader("🔎 Variabili che superano le soglie impostate")
-
-    if "-log10(p-value)" in dati_preparati.columns and "Log2FoldChange" in dati_preparati.columns:
-        variabili_significative = dati_preparati[
-            (dati_preparati['-log10(p-value)'] > p_value_threshold) & 
-            (abs(dati_preparati['Log2FoldChange']) > fold_change_threshold)
-        ][['Variabile', '-log10(p-value)', 'Log2FoldChange']]
-
-        if not variabili_significative.empty:
-            st.dataframe(variabili_significative, use_container_width=True)
-        else:
-            st.write("❌ Nessuna variabile supera entrambe le soglie impostate.")
