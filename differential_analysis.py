@@ -46,7 +46,7 @@ if file is not None:
         dati.insert(0, "etichette", dati.iloc[:, 0])  # 👈 colonna per etichette
         # ✅ Estrae le classi in modo sicuro, compatibile con intestazioni a 1 o 2 livelli
     if isinstance(dati.columns, pd.MultiIndex):
-    classi_con_duplicate = dati.columns.get_level_values(1).tolist()
+        classi_con_duplicate = dati.columns.get_level_values(1).tolist()
 else:
     classi_con_duplicate = dati.columns.tolist()[1:]  # esclude la colonna "etichette"
 
