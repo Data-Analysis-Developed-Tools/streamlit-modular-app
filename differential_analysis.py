@@ -42,7 +42,7 @@ st.write(f"🔍 Valori soglia selezionati - Log2FC: {st.session_state['fold_chan
 if file is not None:
     if "file_name" not in st.session_state or st.session_state["file_name"] != file.name:
         # ✅ Legge il file saltando le prime 2 righe e copia la prima colonna come "etichette"
-        dati = pd.read_excel(file, skiprows=2)
+        dati = pd.read_excel(file, header=1)
         dati.insert(0, "etichette", dati.iloc[:, 0])  # 👈 colonna per etichette
 
         # ✅ Estrae le classi in modo sicuro, compatibile con intestazioni a 1 o 2 livelli
