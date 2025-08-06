@@ -111,6 +111,20 @@ def mostra_volcano_plot():
                                  name="Log2FC = 0"))
 
         st.plotly_chart(fig)
+
+# 📌 Mostra una tabella con i punti che superano le soglie
+dati_significativi = dati_preparati[
+    (abs(dati_preparati["Log2FoldChange"]) >= fold_change_threshold) &
+    (dati_preparati["-log10(p-value)"] >= p_value_threshold)
+]
+
+if not dati_significativi.empty:
+    st.subheader("📋 Variabili Significative")
+    st.dataframe(dati_significativi.sort_values("-log10(p-value)", ascending=False))
+else:
+    st.info("🔹 Nessuna variabile supera entrambe le soglie selezionate.")
+
+        
         st.write("✅ Volcano Plot generato con successo!")
   # 📌 Mostra una tabella con i punti che superano le soglie
 dati_significativi = dati_preparati[
