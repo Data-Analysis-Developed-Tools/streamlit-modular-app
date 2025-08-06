@@ -44,6 +44,11 @@ def mostra_volcano_plot():
         st.error("⚠️ Il dataframe 'dati_preparati' è vuoto! Controlla i parametri di filtraggio.")
         return
 
+    # Verifica che esista la colonna "etichette"
+    if "etichette" not in dati_preparati.columns:
+        st.error("❌ La colonna 'etichette' non è presente nei dati.")
+        return
+
     st.markdown(f"""
     <div style="display: flex; justify-content: space-between; margin-bottom: 12px; margin-top: 10px;">
         <h3 style="color: red; text-align: left;">🔴 Over-expression in {classi[1]}</h3>
@@ -69,8 +74,8 @@ def mostra_volcano_plot():
             dati_preparati,
             x='Log2FoldChange',
             y='-log10(p-value)',
-            text='Variabile' if show_labels else None,
-            hover_data=['Variabile'],
+            text='etichette' if show_labels else None,
+            hover_data=['etichette'],
             color=dati_preparati['MediaLog'] if color_by_media else None,
             size=dati_preparati['SizeScaled'],
             color_continuous_scale='RdYlBu_r',
@@ -80,7 +85,11 @@ def mostra_volcano_plot():
         if show_labels:
             fig.update_traces(
                 textposition='top center',
-                mode='markers+text'  # 🔥 necessario per rendere visibili le etichette
+                mode='markers+text',
+                textfont=dict(
+                    size=8,
+                    color='black'
+                )
             )
 
         fig.update_layout(
@@ -112,7 +121,7 @@ def mostra_volcano_plot():
 
         st.plotly_chart(fig)
 
-        # 📌 Mostra una tabella con i punti che superano le soglie
+        # 📋 Mostra tabella con variabili significative
         dati_significativi = dati_preparati[
             (abs(dati_preparati["Log2FoldChange"]) >= fold_change_threshold) &
             (dati_preparati["-log10(p-value)"] >= p_value_threshold)
