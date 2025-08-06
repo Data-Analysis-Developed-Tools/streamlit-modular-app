@@ -3,7 +3,6 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import numpy as np
-from components.data_loader import prepara_dati
 
 def mostra_volcano_plot():
     st.title("Volcano Plot Interattivo")
@@ -34,104 +33,109 @@ def mostra_volcano_plot():
     st.write(f"📊 Soglie impostate: Log2FC={fold_change_threshold}, -log10(p-value)={p_value_threshold}")
 
     try:
-        dati_preparati = prepara_dati(dati, classi, fold_change_threshold, p_value_threshold)
-        st.success("✅ Funzione `prepara_dati` eseguita correttamente.")
+        # Prepara i dati calcolando log2FC e -log10(p-value)
+        # Dati in input devono avere colonne con class_1 e class_2
+        class_1 = classi[0]
+        class_2 = classi[1]
+
+        media_1 = dati.xs(class_1, axis=1, level=1).mean(axis=1)
+        media_2 = dati.xs(class_2, axis=1, level=1).mean(axis=1)
+
+        log2fc = np.log2(media_2 / media_1)
+        p_values = []
+        from scipy.stats import ttest_ind
+
+        for i in range(dati.shape[0]):
+            gruppo1 = dati.xs(class_1, axis=1, level=1).iloc[i, :]
+            gruppo2 = dati.xs(class_2, axis=1, level=1).iloc[i, :]
+            _, p_val = ttest_ind(gruppo1, gruppo2, equal_var=False)
+            p_values.append(p_val)
+
+        df = pd.DataFrame({
+            "Log2FoldChange": log2fc,
+            "-log10(p-value)": -np.log10(p_values),
+            "MediaLog": np.log10((media_1 + media_2) / 2 + 1e-8),
+            "etichette": dati.index.astype(str)  # 👈 usa l'indice come etichette (cioè i nomi delle variabili)
+        })
+
+        st.success("✅ Dati elaborati correttamente.")
     except Exception as e:
-        st.error(f"❌ Errore in `prepara_dati`: {e}")
+        st.error(f"❌ Errore durante la preparazione dei dati: {e}")
         return
 
-    if dati_preparati is None or dati_preparati.empty:
-        st.error("⚠️ Il dataframe 'dati_preparati' è vuoto! Controlla i parametri di filtraggio.")
-        return
-
-    # Usa 'etichette' se presente, altrimenti None
-    usa_etichette = "etichette" in dati_preparati.columns and show_labels
-
-    st.markdown(f"""
-    <div style="display: flex; justify-content: space-between; margin-bottom: 12px; margin-top: 10px;">
-        <h3 style="color: red; text-align: left;">🔴 Over-expression in {classi[1]}</h3>
-        <h3 style="color: green; text-align: right;">🟢 Over-expression in {classi[0]}</h3>
-    </div>
-    """, unsafe_allow_html=True)
-
+    # Aggiunge la colonna SizeScaled per il dimensionamento dei punti
     if size_by_media and n_base is not None:
-        dati_preparati["SizeScaled"] = np.power(n_base, dati_preparati["MediaLog"])
+        df["SizeScaled"] = np.power(n_base, df["MediaLog"])
     else:
-        dati_preparati["SizeScaled"] = 0.0001
+        df["SizeScaled"] = 0.0001
 
-    x_min_raw, x_max_raw = dati_preparati['Log2FoldChange'].min(), dati_preparati['Log2FoldChange'].max()
-    y_max_raw = dati_preparati['-log10(p-value)'].max()
+    # Imposta i margini
+    x_min_raw, x_max_raw = df['Log2FoldChange'].min(), df['Log2FoldChange'].max()
+    y_max_raw = df['-log10(p-value)'].max()
     x_margin = abs(x_max_raw - x_min_raw) * 0.1
     y_margin = y_max_raw * 0.01
     x_min = min(x_min_raw, -fold_change_threshold * 1.2) - x_margin
     x_max = max(x_max_raw, fold_change_threshold * 1.2) + x_margin
     y_max = y_max_raw + y_margin
 
-    try:
-        fig = px.scatter(
-            dati_preparati,
-            x='Log2FoldChange',
-            y='-log10(p-value)',
-            text='etichette' if usa_etichette else None,
-            hover_data=['etichette'] if "etichette" in dati_preparati.columns else None,
-            color=dati_preparati['MediaLog'] if color_by_media else None,
-            size=dati_preparati['SizeScaled'],
-            color_continuous_scale='RdYlBu_r',
-            size_max=10
+    # Crea Volcano Plot
+    fig = px.scatter(
+        df,
+        x='Log2FoldChange',
+        y='-log10(p-value)',
+        text=df["etichette"] if show_labels else None,
+        hover_data=['etichette'],
+        color=df['MediaLog'] if color_by_media else None,
+        size=df['SizeScaled'],
+        color_continuous_scale='RdYlBu_r',
+        size_max=10
+    )
+
+    if show_labels:
+        fig.update_traces(
+            textposition='top center',
+            mode='markers+text',
+            textfont=dict(size=8)  # 👈 Etichette con font piccolo
         )
 
-        if usa_etichette:
-            fig.update_traces(
-                textposition='top center',
-                mode='markers+text',
-                textfont=dict(
-                    size=8,
-                    color='black'
-                )
-            )
+    fig.update_layout(
+        xaxis=dict(range=[x_min, x_max]),
+        yaxis=dict(range=[0, y_max]),
+        height=1000,
+        margin=dict(l=150, r=150, t=200, b=100)
+    )
 
-        fig.update_layout(
-            xaxis=dict(range=[x_min, x_max]),
-            yaxis=dict(range=[0, y_max]),
-            height=1000,
-            margin=dict(l=150, r=150, t=200, b=100)
-        )
+    # Linee di soglia
+    fig.add_trace(go.Scatter(x=[-fold_change_threshold, -fold_change_threshold],
+                             y=[0, y_max],
+                             mode='lines', line=dict(color='red', dash='dash', width=2),
+                             name=f"-Log2FC soglia ({-fold_change_threshold})"))
 
-        fig.add_trace(go.Scatter(x=[-fold_change_threshold, -fold_change_threshold],
-                                 y=[0, y_max],
-                                 mode='lines', line=dict(color='red', dash='dash', width=2),
-                                 name=f"-Log2FC soglia ({-fold_change_threshold})"))
+    fig.add_trace(go.Scatter(x=[fold_change_threshold, fold_change_threshold],
+                             y=[0, y_max],
+                             mode='lines', line=dict(color='red', dash='dash', width=2),
+                             name=f"+Log2FC soglia ({fold_change_threshold})"))
 
-        fig.add_trace(go.Scatter(x=[fold_change_threshold, fold_change_threshold],
-                                 y=[0, y_max],
-                                 mode='lines', line=dict(color='red', dash='dash', width=2),
-                                 name=f"+Log2FC soglia ({fold_change_threshold})"))
+    fig.add_trace(go.Scatter(x=[x_min, x_max],
+                             y=[p_value_threshold, p_value_threshold],
+                             mode='lines', line=dict(color='blue', dash='dash', width=2),
+                             name=f"Soglia -log10(p-value) ({p_value_threshold})"))
 
-        fig.add_trace(go.Scatter(x=[x_min, x_max],
-                                 y=[p_value_threshold, p_value_threshold],
-                                 mode='lines', line=dict(color='blue', dash='dash', width=2),
-                                 name=f"Soglia -log10(p-value) ({p_value_threshold})"))
+    fig.add_trace(go.Scatter(x=[0, 0],
+                             y=[0, y_max],
+                             mode='lines', line=dict(color='lightgray', dash='dash', width=1.5),
+                             name="Log2FC = 0"))
 
-        fig.add_trace(go.Scatter(x=[0, 0],
-                                 y=[0, y_max],
-                                 mode='lines', line=dict(color='lightgray', dash='dash', width=1.5),
-                                 name="Log2FC = 0"))
+    st.plotly_chart(fig)
 
-        st.plotly_chart(fig)
+    # 📋 Mostra tabella dei dati significativi
+    dati_significativi = df[
+        (abs(df["Log2FoldChange"]) >= fold_change_threshold) &
+        (df["-log10(p-value)"] >= p_value_threshold)
+    ]
 
-        # 📋 Mostra tabella con variabili significative
-        dati_significativi = dati_preparati[
-            (abs(dati_preparati["Log2FoldChange"]) >= fold_change_threshold) &
-            (dati_preparati["-log10(p-value)"] >= p_value_threshold)
-        ]
-
-        if not dati_significativi.empty:
-            st.subheader("📋 Variabili Significative")
-            st.dataframe(dati_significativi.sort_values("-log10(p-value)", ascending=False))
-        else:
-            st.info("🔹 Nessuna variabile supera entrambe le soglie selezionate.")
-
-        st.write("✅ Volcano Plot generato con successo!")
-
-    except Exception as e:
-        st.error(f"❌ Errore nella generazione del Volcano Plot: {e}")
+    if not dati_significativi.empty:
+        st.subheader("📋 Variabili Significative")
+        st.dataframe(dati_significativi.sort_values("-log10(p-value)", ascending=False))
+    else:
+        st.info("🔹 Nessuna variabile supera entrambe le soglie selezionate.")
