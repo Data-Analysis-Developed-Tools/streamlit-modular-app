@@ -56,9 +56,8 @@ def mostra_volcano_plot():
     else:
         dati_preparati["SizeScaled"] = 0.0001
 
-    # ✅ Etichette come stringa prese dalla prima colonna
-    if show_labels:
-        dati_preparati["EtichettaVariabile"] = dati_preparati.iloc[:, 0].astype(str)
+    # ✅ Forziamo che la colonna delle etichette sia stringa
+    dati_preparati["EtichettaVariabile"] = dati_preparati.iloc[:, 0].astype(str)
 
     x_min_raw, x_max_raw = dati_preparati['Log2FoldChange'].min(), dati_preparati['Log2FoldChange'].max()
     y_max_raw = dati_preparati['-log10(p-value)'].max()
@@ -69,15 +68,12 @@ def mostra_volcano_plot():
     y_max = y_max_raw + y_margin
 
     try:
-        # ✅ Forziamo che la colonna 'Variabile' sia stringa, per sicurezza
-        dati_preparati['Variabile'] = dati_preparati['Variabile'].astype(str)
-
         fig = px.scatter(
             dati_preparati,
             x='Log2FoldChange',
             y='-log10(p-value)',
-            text=dati_preparati['Variabile'] if show_labels else None,  # ← 👈 PASSA LA COLONNA DIRETTAMENTE
-            hover_data=['Variabile'],
+            text='EtichettaVariabile' if show_labels else None,
+            hover_data=['EtichettaVariabile'],
             color=dati_preparati['MediaLog'] if color_by_media else None,
             size=dati_preparati['SizeScaled'],
             color_continuous_scale='RdYlBu_r',
