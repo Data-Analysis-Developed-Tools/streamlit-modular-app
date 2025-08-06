@@ -11,8 +11,6 @@ try:
     st.write("✅ Importazione di mostra_volcano_plot avvenuta con successo.")
 except Exception as e:
     st.error(f"❌ Errore nell'import di mostra_volcano_plot: {e}")
-    
-    # Definisce una funzione vuota alternativa, così non va in crash
     def mostra_volcano_plot():
         st.error("❌ La funzione `mostra_volcano_plot()` non è disponibile.")
 
@@ -21,8 +19,6 @@ try:
     st.write("✅ Importazione di mostra_tabella avvenuta con successo.")
 except Exception as e:
     st.error(f"❌ Errore nell'import di mostra_tabella: {e}")
-   
-    # Definisce una funzione vuota alternativa, così non va in crash
     def mostra_tabella():
         st.error("❌ La funzione `mostra_tabella()` non è disponibile.")
 
@@ -41,24 +37,37 @@ st.write(f"🔍 Valori soglia selezionati - Log2FC: {st.session_state['fold_chan
 # Controllo se il file è stato caricato
 if file is not None:
     if "file_name" not in st.session_state or st.session_state["file_name"] != file.name:
-        # ✅ Legge il file saltando le prime 2 righe e copia la prima colonna come "etichette"
-        dati = pd.read_excel(file, header=1)
-        dati.insert(0, "etichette", dati.iloc[:, 0])  # 👈 colonna per etichette
+        # ✅ Legge il file saltando le prime 2 righe
+        raw_df = pd.read_excel(file, header=[0, 1], skiprows=[0])
 
-        # ✅ Estrae le classi in modo sicuro, compatibile con intestazioni a 1 o 2 livelli
-        if isinstance(dati.columns, pd.MultiIndex):
-            classi_con_duplicate = dati.columns.get_level_values(1).tolist()
-        else:
-            classi_con_duplicate = dati.columns.tolist()[1:]  # esclude la colonna "etichette"
+        # ✅ Rimuove la colonna Unnamed: 0 se presente
+        if "Unnamed: 0" in raw_df.columns.get_level_values(0):
+            raw_df = raw_df.drop(columns="Unnamed: 0")
 
-        # 📌 Rimuove i suffissi numerici (.1, .2, ecc.) per evitare classi duplicate
+        # ✅ Inserisce la colonna "etichette" come copia della prima colonna dati
+        raw_df.insert(0, "etichette", raw_df.iloc[:, 0].values)
+
+        # ✅ Rinomina le colonne Unnamed per evitare problemi
+        new_cols = []
+        for col in raw_df.columns:
+            if isinstance(col, tuple):
+                col_name = col[1] if col[0].startswith("Unnamed") else f"{col[0]}_{col[1]}"
+                new_cols.append(col_name)
+            else:
+                new_cols.append(col)
+        raw_df.columns = new_cols
+
+        # ✅ Ricava le classi a partire dalla riga 2 del file originale (indice 1 di header)
+        classi_con_duplicate = [c for c in raw_df.columns if c not in ["etichette"]]
+
+        # **📌 Rimuove i suffissi numerici (.1, .2, .3, ecc.) per evitare classi duplicate**
         classi_pulite = [re.sub(r'\.\d+$', '', str(classe)) for classe in classi_con_duplicate]
 
-        # 📌 Rimuove eventuali duplicati causati dai suffissi
+        # **Rimuove eventuali duplicati causati dai suffissi**
         classi_uniche = list(set(classi_pulite))
 
-        if dati is not None and len(classi_uniche) > 1:
-            st.session_state["dati_completi"] = dati
+        if raw_df is not None and len(classi_uniche) > 1:
+            st.session_state["dati_completi"] = raw_df
             st.session_state["classi"] = classi_uniche
             st.session_state["file_name"] = file.name
             st.session_state["dati_filtrati"] = None
@@ -74,18 +83,13 @@ if file is not None:
 
         if st.sidebar.button("✅ Conferma selezione"):
             if class_1 and class_2 and class_1 != class_2:
-                try:
-                    dati_filtrati = st.session_state["dati_completi"].loc[:, 
-                        st.session_state["dati_completi"].columns.get_level_values(1).isin([class_1, class_2])]
-                except:
-                    dati_filtrati = st.session_state["dati_completi"].loc[:, 
-                        st.session_state["dati_completi"].columns.isin([class_1, class_2])]
-
+                dati_filtrati = st.session_state["dati_completi"][["etichette", class_1, class_2]]
                 st.session_state["dati_filtrati"] = dati_filtrati
                 st.session_state["class_1"] = class_1
                 st.session_state["class_2"] = class_2
-
                 st.sidebar.success("✅ Selezione confermata! Scegli un'analisi.")
+            else:
+                st.sidebar.warning("⚠️ Seleziona due classi distinte.")
 
 # Dopo la conferma della selezione, abilitare la navigazione
 if "dati_filtrati" in st.session_state and st.session_state["dati_filtrati"] is not None:
