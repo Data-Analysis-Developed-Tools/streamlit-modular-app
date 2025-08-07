@@ -8,7 +8,6 @@ from components.data_loader import prepara_dati
 def mostra_volcano_plot():
     st.title("Volcano Plot Interattivo")
 
-    # Controlla se i dati filtrati esistono in session_state
     if "dati_filtrati" not in st.session_state or st.session_state["dati_filtrati"] is None:
         st.error("⚠️ Nessun dato filtrato disponibile. Torna alla homepage e seleziona le classi.")
         return
@@ -27,8 +26,7 @@ def mostra_volcano_plot():
     fold_change_threshold = st.session_state.get("fold_change_threshold", default_fold_change)
     p_value_threshold = st.session_state.get("p_value_threshold", default_p_value)
 
-    # Le etichette sono sempre nascoste: niente checkbox, impostazione fissa
-    show_labels = False
+    show_labels = False  # Etichette disattivate di default e nessuna opzione in sidebar
     size_by_media = st.sidebar.checkbox("Dimensiona punti per media valori (n^MediaLog)", value=False)
     color_by_media = st.sidebar.checkbox("Colora punti per media valori", value=False)
 
@@ -46,14 +44,10 @@ def mostra_volcano_plot():
         st.error(f"❌ Errore in `prepara_dati`: {e}")
         return
 
-    # Rinomina la colonna per uniformare il nome previsto dal codice
-    dati_preparati.rename(columns={"Variabile": "EtichettaVariabile"}, inplace=True)
-
     if dati_preparati is None or dati_preparati.empty:
         st.error("⚠️ Il dataframe 'dati_preparati' è vuoto! Controlla i parametri di filtraggio.")
         return
 
-    # Calcolo della dimensione dei punti con n^MediaLog se richiesto
     if size_by_media and n_base is not None:
         dati_preparati["SizeScaled"] = np.power(n_base, dati_preparati["MediaLog"])
     else:
@@ -63,7 +57,6 @@ def mostra_volcano_plot():
     x_max = max(dati_preparati['Log2FoldChange'].max(), fold_change_threshold * 1.2)
     y_max = max(dati_preparati['-log10(p-value)'].max(), p_value_threshold * 1.2)
 
-    # ✅ Volcano Plot con tooltip compatibile
     try:
         fig = px.scatter(
             dati_preparati,
@@ -88,7 +81,6 @@ def mostra_volcano_plot():
             height=1000
         )
 
-        # Aggiunta delle linee di soglia
         fig.add_trace(go.Scatter(
             x=[-fold_change_threshold, -fold_change_threshold],
             y=[0, y_max],
@@ -123,12 +115,10 @@ def mostra_volcano_plot():
 
         st.plotly_chart(fig)
         st.write("✅ Volcano Plot generato con successo!")
-
     except Exception as e:
         st.error(f"❌ Errore durante la generazione del Volcano Plot: {e}")
         return
 
-    # Mostra tabella riepilogativa se le soglie sono state modificate
     if fold_change_threshold != default_fold_change or p_value_threshold != default_p_value:
         st.subheader("🔎 Variabili che superano le soglie impostate")
 
