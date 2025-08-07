@@ -32,7 +32,7 @@ def mostra_volcano_plot():
     if size_by_media:
         n_base = st.sidebar.slider("Scegli la base dell'esponenziale (n)", min_value=1, max_value=25, value=10)
     else:
-        n_base = None  
+        n_base = None
 
     st.write(f"📊 Soglie impostate: Log2FC={fold_change_threshold}, -log10(p-value)={p_value_threshold}")
 
@@ -47,43 +47,35 @@ def mostra_volcano_plot():
         st.error("⚠️ Il dataframe 'dati_preparati' è vuoto! Controlla i parametri di filtraggio.")
         return
 
-    # Calcola dimensione punti
+    # Associa i nomi delle classi reali alle colonne
+    class_1 = st.session_state.get("class_1", "Classe 1")
+    class_2 = st.session_state.get("class_2", "Classe 2")
+    dati_preparati[class_1] = dati_preparati["Media_Classe_1"]
+    dati_preparati[class_2] = dati_preparati["Media_Classe_2"]
+
     if size_by_media and n_base is not None:
         dati_preparati["SizeScaled"] = np.power(n_base, dati_preparati["MediaLog"])
     else:
         dati_preparati["SizeScaled"] = 0.0001
 
-    # Recupera i nomi delle classi
-    class_1 = classi[0]
-    class_2 = classi[1]
-
-    # Inserisce colonne con media per ciascuna classe
-    dati_preparati["MediaClasse1"] = dati_preparati[class_1]
-    dati_preparati["MediaClasse2"] = dati_preparati[class_2]
-
-    # Alias con nomi reali per tooltip
-    dati_preparati[class_1] = dati_preparati["MediaClasse1"]
-    dati_preparati[class_2] = dati_preparati["MediaClasse2"]
-
-    # Tooltip personalizzato
-    dati_preparati["customtooltip"] = dati_preparati.apply(
-        lambda r: (
-            f"<span style='font-size:20px'><b>{r['Variabile']}</b></span><br>"
-            f"<span style='font-size:16px'>{class_1}: {r[class_1]:.2f}</span><br>"
-            f"<span style='font-size:16px'>{class_2}: {r[class_2]:.2f}</span><br>"
-            f"<span style='font-size:14px'>Log2FC: {r['Log2FoldChange']:.2f}</span><br>"
-            f"<span style='font-size:14px'>-log10(p): {r['-log10(p-value)']:.2f}</span><br>"
-            f"<span style='font-size:14px'>MediaLog: {r['MediaLog']:.2f}</span>"
-        ),
-        axis=1
-    )
-
-    # Volcano plot
     x_min = min(dati_preparati['Log2FoldChange'].min(), -fold_change_threshold * 1.2)
     x_max = max(dati_preparati['Log2FoldChange'].max(), fold_change_threshold * 1.2)
     y_max = max(dati_preparati['-log10(p-value)'].max(), p_value_threshold * 1.2)
 
     try:
+        # Tooltip personalizzato
+        dati_preparati["customtooltip"] = dati_preparati.apply(
+            lambda r: (
+                f"<span style='font-size:20px'><b>{r['Variabile']}</b></span><br>"
+                f"<span style='font-size:16px'>{class_1}: {r[class_1]:.2f}</span><br>"
+                f"<span style='font-size:16px'>{class_2}: {r[class_2]:.2f}</span><br>"
+                f"<span style='font-size:14px'>Log2FC: {r['Log2FoldChange']:.2f}</span><br>"
+                f"<span style='font-size:14px'>-log10(p): {r['-log10(p-value)']:.2f}</span><br>"
+                f"<span style='font-size:14px'>MediaLog: {r['MediaLog']:.2f}</span>"
+            ),
+            axis=1
+        )
+
         fig = px.scatter(
             dati_preparati,
             x='Log2FoldChange',
@@ -110,27 +102,28 @@ def mostra_volcano_plot():
             showlegend=False
         )
 
-        # Linee soglie
-        fig.add_trace(go.Scatter(x=[-fold_change_threshold, -fold_change_threshold], y=[0, y_max],
-                                 mode='lines', line=dict(color='red', dash='dash', width=2)))
-        fig.add_trace(go.Scatter(x=[fold_change_threshold, fold_change_threshold], y=[0, y_max],
-                                 mode='lines', line=dict(color='red', dash='dash', width=2)))
-        fig.add_trace(go.Scatter(x=[x_min, x_max], y=[p_value_threshold, p_value_threshold],
-                                 mode='lines', line=dict(color='blue', dash='dash', width=2)))
-        fig.add_trace(go.Scatter(x=[0, 0], y=[0, y_max],
-                                 mode='lines', line=dict(color='lightgray', dash='dash', width=1.5)))
+        # Linee soglia
+        fig.add_trace(go.Scatter(x=[-fold_change_threshold, -fold_change_threshold],
+                                 y=[0, y_max], mode='lines',
+                                 line=dict(color='red', dash='dash', width=2)))
+        fig.add_trace(go.Scatter(x=[fold_change_threshold, fold_change_threshold],
+                                 y=[0, y_max], mode='lines',
+                                 line=dict(color='red', dash='dash', width=2)))
+        fig.add_trace(go.Scatter(x=[x_min, x_max],
+                                 y=[p_value_threshold, p_value_threshold], mode='lines',
+                                 line=dict(color='blue', dash='dash', width=2)))
+        fig.add_trace(go.Scatter(x=[0, 0], y=[0, y_max], mode='lines',
+                                 line=dict(color='lightgray', dash='dash', width=1.5)))
 
         st.plotly_chart(fig)
         st.write("✅ Volcano Plot generato con successo!")
-
     except Exception as e:
         st.error(f"❌ Errore durante la generazione del Volcano Plot: {e}")
         return
 
-    # Tabella riepilogativa
+    # Tabella delle variabili significative
     if fold_change_threshold != default_fold_change or p_value_threshold != default_p_value:
         st.subheader("🔎 Variabili che superano le soglie impostate")
-
         variabili_significative = dati_preparati[
             (dati_preparati['-log10(p-value)'] > p_value_threshold) & 
             (abs(dati_preparati['Log2FoldChange']) > fold_change_threshold)
