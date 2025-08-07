@@ -28,7 +28,6 @@ def mostra_volcano_plot():
     default_p_value = 0.05
     fold_change_threshold = st.session_state.get("fold_change_threshold", default_fold_change)
     p_value_threshold = st.session_state.get("p_value_threshold", default_p_value)
-    show_labels = st.sidebar.checkbox("Mostra etichette delle variabili", value=True)
     size_by_media = st.sidebar.checkbox("Dimensiona punti per media valori (n^MediaLog)", value=False)
     color_by_media = st.sidebar.checkbox("Colora punti per media valori", value=False)
 
