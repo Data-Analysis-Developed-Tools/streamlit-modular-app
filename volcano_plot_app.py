@@ -39,16 +39,14 @@ def mostra_volcano_plot():
         dati_preparati = prepara_dati(dati, classi, fold_change_threshold, p_value_threshold)
         st.write("✅ Funzione `prepara_dati` eseguita correttamente.")
 
-        # 🔧 Rinominare in modo robusto la colonna delle etichette
-        col_etichetta = None
-        for possibile in ["EtichettaVariabile", "Variabile", "etichette"]:
-            if possibile in dati_preparati.columns:
-                col_etichetta = possibile
-                break
-        if col_etichetta is None:
-            st.error("❌ Nessuna colonna trovata per le etichette delle variabili.")
-            return
-        dati_preparati = dati_preparati.rename(columns={col_etichetta: "EtichettaVariabile"})
+        # 🔧 Rinominare la colonna delle etichette se serve
+        if "EtichettaVariabile" not in dati_preparati.columns:
+            for col in ["Variabile", "etichette", "Label", "ID"]:
+                if col in dati_preparati.columns:
+                    dati_preparati = dati_preparati.rename(columns={col: "EtichettaVariabile"})
+                    break
+            else:
+                st.warning("⚠️ Nessuna colonna trovata da rinominare come 'EtichettaVariabile'.")
 
     except Exception as e:
         st.error(f"❌ Errore in `prepara_dati`: {e}")
@@ -124,7 +122,6 @@ def mostra_volcano_plot():
 
     except Exception as e:
         st.error(f"❌ Errore durante la generazione del Volcano Plot: {e}")
-        return
 
     if fold_change_threshold != default_fold_change or p_value_threshold != default_p_value:
         st.subheader("🔎 Variabili che superano le soglie impostate")
@@ -137,5 +134,5 @@ def mostra_volcano_plot():
                 st.dataframe(variabili_significative, use_container_width=True)
             else:
                 st.write("❌ Nessuna variabile supera entrambe le soglie impostate.")
-        except KeyError as e:
-            st.error(f"❌ Errore nel mostrare la tabella finale: colonna mancante {e}")
+        except KeyError:
+            st.warning("⚠️ La colonna 'EtichettaVariabile' non è disponibile.")
