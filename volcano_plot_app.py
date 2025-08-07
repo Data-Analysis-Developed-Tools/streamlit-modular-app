@@ -60,9 +60,9 @@ def mostra_volcano_plot():
         # Crea tooltip HTML personalizzato
         dati_preparati["customtooltip"] = dati_preparati.apply(
             lambda r: (
-                f"<span style='font-size:20px'><b>{r['Variabile']}</b></span><br>"
-                f"<span style='font-size:16px'>{class_1}: {r[class_1]:.2f}</span><br>"
-                f"<span style='font-size:16px'>{class_2}: {r[class_2]:.2f}</span><br>"
+                f"<span style='font-size:45px'><b>{r['Variabile']}</b></span><br>"
+                f"<span style='font-size:25px'>{class_1}: {r[class_1]:.2f}</span><br>"
+                f"<span style='font-size:25px'>{class_2}: {r[class_2]:.2f}</span><br>"
                 f"<span style='font-size:14px'>Log2FC: {r['Log2FoldChange']:.2f}</span><br>"
                 f"<span style='font-size:14px'>-log10(p): {r['-log10(p-value)']:.2f}</span><br>"
                 f"<span style='font-size:14px'>MediaLog: {r['MediaLog']:.2f}</span>"
