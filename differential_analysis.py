@@ -1,87 +1,82 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
+import re  # 📌 Libreria per rimuovere i suffissi numerici
 
-def differential_analysis(df, class_1, class_2):
-    # Calcola media logaritmica e log2 fold change
-    df_class_1 = df[df["Classe"] == class_1].drop("Classe", axis=1)
-    df_class_2 = df[df["Classe"] == class_2].drop("Classe", axis=1)
+# 🚀 `st.set_page_config()` deve essere la PRIMA istruzione eseguita
+st.set_page_config(page_title="Analisi Dati - Volcano Plot e Tabella", layout="wide")
 
-    media_1 = df_class_1.mean()
-    media_2 = df_class_2.mean()
-    media_log = (media_1 + media_2) / 2
+from components.data_loader import carica_dati
 
-    # Aggiungi pseudocount per evitare divisione per zero
-    pseudocount = 1e-9
-    log2fc = np.log2((media_2 + pseudocount) / (media_1 + pseudocount))
+# 🚀 Importiamo i moduli solo quando servono, evitando problemi
+try:
+    from volcano_plot_app import mostra_volcano_plot
+    st.write("✅ Importazione di mostra_volcano_plot avvenuta con successo.")
+except Exception as e:
+    st.error(f"❌ Errore nell'import di mostra_volcano_plot: {e}")
 
-    # Calcolo p-value con t-test (Welch)
-    from scipy.stats import ttest_ind
-    p_values = []
-    for variabile in df_class_1.columns:
-        _, p = ttest_ind(df_class_2[variabile], df_class_1[variabile], equal_var=False)
-        p_values.append(p)
+try:
+    from table_app import mostra_tabella
+    st.write("✅ Importazione di mostra_tabella avvenuta con successo.")
+except Exception as e:
+    st.error(f"❌ Errore nell'import di mostra_tabella: {e}")
 
-    # Crea DataFrame risultati
-    risultati = pd.DataFrame({
-        "Variabile": df_class_1.columns,
-        "Log2FoldChange": log2fc.values,
-        "pvalue": p_values,
-        "MediaLog": media_log.values
-    })
+# Sidebar - Caricamento file
+st.sidebar.title("📂 Caricamento Dati")
+file = st.sidebar.file_uploader("Carica il file Excel", type=['xlsx'])
 
-    return risultati
+# Sidebar - Form per specificare i parametri di filtraggio
+st.sidebar.subheader("⚙️ Parametri di filtraggio")
+st.session_state["fold_change_threshold"] = st.sidebar.number_input("Soglia Log2FoldChange", value=0.0)
+st.session_state["p_value_threshold"] = st.sidebar.number_input("Soglia -log10(p-value)", value=0.0)
 
+# Debug: Visualizziamo i valori impostati nella sidebar
+st.write(f"🔍 Valori soglia selezionati - Log2FC: {st.session_state['fold_change_threshold']}, -log10(p-value): {st.session_state['p_value_threshold']}")
 
-def run_analysis():
-    st.title("Analisi Differenziale")
+# Controllo se il file è stato caricato
+if file is not None:
+    if "file_name" not in st.session_state or st.session_state["file_name"] != file.name:
+        dati, classi_con_duplicate = carica_dati(file)
 
-    uploaded_file = st.file_uploader("Carica il file Excel contenente i dati", type=["xlsx"])
+        # **📌 Rimuove i suffissi numerici (.1, .2, .3, ecc.) per evitare classi duplicate**
+        classi_pulite = [re.sub(r'\.\d+$', '', classe) for classe in classi_con_duplicate]
 
-    if uploaded_file is not None:
-        try:
-            df = pd.read_excel(uploaded_file)
-        except Exception as e:
-            st.error(f"Errore nella lettura del file: {e}")
-            return
+        # **Rimuove eventuali duplicati causati dai suffissi**
+        classi_uniche = list(set(classi_pulite))
 
-        if df.shape[1] < 3:
-            st.warning("Il file deve contenere almeno 3 colonne: EtichettaVariabile, Classe e almeno una variabile numerica.")
-            return
+        if dati is not None and len(classi_uniche) > 1:
+            st.session_state["dati_completi"] = dati
+            st.session_state["classi"] = classi_uniche
+            st.session_state["file_name"] = file.name
+            st.session_state["dati_filtrati"] = None
+        else:
+            st.sidebar.warning("⚠️ Il file caricato non contiene abbastanza classi per l'analisi.")
+            st.stop()
 
-        # Separazione delle colonne
-        etichette = df.iloc[:, 0].astype(str)
-        classi = df.iloc[:, 1]
-        dati_numerici = df.iloc[:, 2:]
+    # Sidebar - Selezione delle classi
+    if "classi" in st.session_state:
+        st.sidebar.subheader("🔍 Seleziona le classi da confrontare:")
+        class_1 = st.sidebar.selectbox("Classe 1", sorted(st.session_state["classi"]), key="classe1")
+        class_2 = st.sidebar.selectbox("Classe 2", sorted(st.session_state["classi"]), key="classe2")
 
-        # Ricostruzione DataFrame
-        df_ristrutturato = dati_numerici.copy()
-        df_ristrutturato["Classe"] = classi
-        df_ristrutturato["EtichettaVariabile"] = etichette
+        if st.sidebar.button("✅ Conferma selezione"):
+            if class_1 and class_2 and class_1 != class_2:
+                dati_filtrati = st.session_state["dati_completi"].loc[:, 
+                    st.session_state["dati_completi"].columns.get_level_values(1).isin([class_1, class_2])]
 
-        # Trasposizione per avere variabili come colonne
-        df_trasposto = df_ristrutturato.set_index("EtichettaVariabile").transpose()
-        df_trasposto["Classe"] = classi.values
+                st.session_state["dati_filtrati"] = dati_filtrati
+                st.session_state["class_1"] = class_1
+                st.session_state["class_2"] = class_2
 
-        # Selezione delle classi
-        classi_uniche = df_trasposto["Classe"].unique()
-        class_1 = st.selectbox("Seleziona la prima classe", classi_uniche, key="class_1")
-        class_2 = st.selectbox("Seleziona la seconda classe", [c for c in classi_uniche if c != class_1], key="class_2")
+                st.sidebar.success("✅ Selezione confermata! Scegli un'analisi.")
 
-        if st.button("Esegui analisi differenziale"):
-            with st.spinner("Analisi in corso..."):
-                risultati = differential_analysis(df_trasposto, class_1, class_2)
+# Dopo la conferma della selezione, abilitare la navigazione
+if "dati_filtrati" in st.session_state and st.session_state["dati_filtrati"] is not None:
+    st.sidebar.title("📊 Navigazione")
+    sezione = st.sidebar.radio("Scegli una sezione:", ["Volcano Plot", "Tabella Dati"])
 
-                # Applica trasformazione -log10(p-value)
-                risultati["-log10(p-value)"] = -np.log10(risultati["pvalue"])
-
-                # Ripristina la colonna EtichettaVariabile correttamente
-                risultati["EtichettaVariabile"] = risultati["Variabile"].astype(str)
-
-                # ✅ Conversione esplicita in stringa
-                risultati["EtichettaVariabile"] = risultati["EtichettaVariabile"].astype(str)
-
-                st.session_state["dati_filtrati"] = risultati
-                st.success("✅ Analisi completata! Vai alla sezione Volcano Plot.")
-    else:
-        st.info("📂 Carica un file Excel per iniziare.")
+    if sezione == "Volcano Plot":
+        mostra_volcano_plot()
+    elif sezione == "Tabella Dati":
+        mostra_tabella()
+else:
+    st.sidebar.info("🔹 Carica un file e seleziona due classi per procedere.")
