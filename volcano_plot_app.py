@@ -62,9 +62,9 @@ def mostra_volcano_plot():
             dati_preparati,
             x='Log2FoldChange',
             y='-log10(p-value)',
-            text='EtichettaVariabile' if show_labels else None,
+            text='Variabile' if show_labels else None,
             hover_data={
-                "EtichettaVariabile": True,
+                "Variabile": True,
                 "Log2FoldChange": ':.2f',
                 "-log10(p-value)": ':.2f',
                 "MediaLog": ':.2f'
