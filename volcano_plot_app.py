@@ -59,7 +59,7 @@ def mostra_volcano_plot():
     try:
         dati_preparati["customtooltip"] = dati_preparati.apply(
             lambda r: (
-                f"<span style='font-size:45px'><b>{r['Variabile']}</b></span><br>"
+                f"<span style='font-size:20px'><b>{r['Variabile']}</b></span><br>"
                 f"<span style='font-size:18px'>Log2FC: {r['Log2FoldChange']:.2f}</span><br>"
                 f"<span style='font-size:18px'>-log10(p): {r['-log10(p-value)']:.2f}</span><br>"
                 f"<span style='font-size:18px'>MediaLog: {r['MediaLog']:.2f}</span><br>"
