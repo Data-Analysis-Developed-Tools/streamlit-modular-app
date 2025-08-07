@@ -32,37 +32,40 @@ def mostra_volcano_plot():
     if size_by_media:
         n_base = st.sidebar.slider("Scegli la base dell'esponenziale (n)", min_value=1, max_value=25, value=10)
     else:
-        n_base = None  
+        n_base = None
 
     st.write(f"📊 Soglie impostate: Log2FC={fold_change_threshold}, -log10(p-value)={p_value_threshold}")
 
     try:
         dati_preparati = prepara_dati(dati, classi, fold_change_threshold, p_value_threshold)
         st.write("✅ Funzione `prepara_dati` eseguita correttamente.")
-    except Exception as e:
-        st.error(f"❌ Errore in `prepara_dati`: {e}")
-        return
 
-    if dati_preparati is None or dati_preparati.empty:
-        st.error("⚠️ Il dataframe 'dati_preparati' è vuoto! Controlla i parametri di filtraggio.")
-        return
+        if dati_preparati is None or dati_preparati.empty:
+            st.error("⚠️ Il dataframe 'dati_preparati' è vuoto! Controlla i parametri di filtraggio.")
+            return
 
-    if size_by_media and n_base is not None:
-        dati_preparati["SizeScaled"] = np.power(n_base, dati_preparati["MediaLog"])
-    else:
-        dati_preparati["SizeScaled"] = 0.0001
+        if size_by_media and n_base is not None:
+            dati_preparati["SizeScaled"] = np.power(n_base, dati_preparati["MediaLog"])
+        else:
+            dati_preparati["SizeScaled"] = 0.0001
 
-    x_min = min(dati_preparati['Log2FoldChange'].min(), -fold_change_threshold * 1.2)
-    x_max = max(dati_preparati['Log2FoldChange'].max(), fold_change_threshold * 1.2)
-    y_max = max(dati_preparati['-log10(p-value)'].max(), p_value_threshold * 1.2)
+        x_min = min(dati_preparati['Log2FoldChange'].min(), -fold_change_threshold * 1.2)
+        x_max = max(dati_preparati['Log2FoldChange'].max(), fold_change_threshold * 1.2)
+        y_max = max(dati_preparati['-log10(p-value)'].max(), p_value_threshold * 1.2)
 
-    try:
+        # Recupera i nomi reali delle due classi selezionate
+        class_1 = st.session_state.get("class_1", "Classe 1")
+        class_2 = st.session_state.get("class_2", "Classe 2")
+
+        # Crea tooltip HTML personalizzato
         dati_preparati["customtooltip"] = dati_preparati.apply(
             lambda r: (
                 f"<span style='font-size:20px'><b>{r['Variabile']}</b></span><br>"
-                f"<span style='font-size:18px'>Log2FC: {r['Log2FoldChange']:.2f}</span><br>"
-                f"<span style='font-size:18px'>-log10(p): {r['-log10(p-value)']:.2f}</span><br>"
-                f"<span style='font-size:18px'>MediaLog: {r['MediaLog']:.2f}</span><br>"
+                f"<span style='font-size:16px'>{class_1}: {r[class_1]:.2f}</span><br>"
+                f"<span style='font-size:16px'>{class_2}: {r[class_2]:.2f}</span><br>"
+                f"<span style='font-size:14px'>Log2FC: {r['Log2FoldChange']:.2f}</span><br>"
+                f"<span style='font-size:14px'>-log10(p): {r['-log10(p-value)']:.2f}</span><br>"
+                f"<span style='font-size:14px'>MediaLog: {r['MediaLog']:.2f}</span>"
             ),
             axis=1
         )
@@ -79,9 +82,7 @@ def mostra_volcano_plot():
         )
 
         fig.update_traces(
-            hovertemplate=(
-                "%{customdata[0]}<extra></extra>"
-            ),
+            hovertemplate="%{customdata[0]}<extra></extra>",
             marker=dict(size=8)
         )
 
@@ -110,6 +111,7 @@ def mostra_volcano_plot():
 
         st.plotly_chart(fig)
         st.write("✅ Volcano Plot generato con successo!")
+
     except Exception as e:
         st.error(f"❌ Errore durante la generazione del Volcano Plot: {e}")
         return
