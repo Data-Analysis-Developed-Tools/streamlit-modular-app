@@ -71,7 +71,7 @@ def mostra_volcano_plot():
 
         # Tooltip personalizzato
 def crea_tooltip(riga):
-    nome_var = f"<span style='font-size:16px'><b>{riga['EtichettaVariabile']}</b></span><br>"
+    nome_var = f"<span style='font-size:32px'><b>{riga['EtichettaVariabile']}</b></span><br>"
     over = f"<span style='font-size:10px'>Sovraespresso: {riga['Media_Tesi_Sovra']}</span><br>"
     under = f"<span style='font-size:10px'>Sottoespresso: {riga['Media_Tesi_Sotto']}</span>"
     return nome_var + over + under
