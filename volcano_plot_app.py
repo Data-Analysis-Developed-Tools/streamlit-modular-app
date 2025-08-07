@@ -8,6 +8,7 @@ from components.data_loader import prepara_dati
 def mostra_volcano_plot():
     st.title("Volcano Plot Interattivo")
 
+    # Controlla se i dati filtrati esistono in session_state
     if "dati_filtrati" not in st.session_state or st.session_state["dati_filtrati"] is None:
         st.error("⚠️ Nessun dato filtrato disponibile. Torna alla homepage e seleziona le classi.")
         return
@@ -26,6 +27,7 @@ def mostra_volcano_plot():
     fold_change_threshold = st.session_state.get("fold_change_threshold", default_fold_change)
     p_value_threshold = st.session_state.get("p_value_threshold", default_p_value)
 
+    show_labels = st.sidebar.checkbox("Mostra etichette delle variabili", value=True)
     size_by_media = st.sidebar.checkbox("Dimensiona punti per media valori (n^MediaLog)", value=False)
     color_by_media = st.sidebar.checkbox("Colora punti per media valori", value=False)
 
@@ -47,74 +49,89 @@ def mostra_volcano_plot():
         st.error("⚠️ Il dataframe 'dati_preparati' è vuoto! Controlla i parametri di filtraggio.")
         return
 
+    # Calcolo della dimensione dei punti con n^MediaLog se richiesto
     if size_by_media and n_base is not None:
         dati_preparati["SizeScaled"] = np.power(n_base, dati_preparati["MediaLog"])
     else:
-        dati_preparati["SizeScaled"] = 0.0001  
+        dati_preparati["SizeScaled"] = 0.0001
 
     x_min = min(dati_preparati['Log2FoldChange'].min(), -fold_change_threshold * 1.2)
     x_max = max(dati_preparati['Log2FoldChange'].max(), fold_change_threshold * 1.2)
     y_max = max(dati_preparati['-log10(p-value)'].max(), p_value_threshold * 1.2)
 
-    # Tooltip personalizzato
-    def crea_tooltip(riga):
-        nome_var = f"<span style='font-size:16px'><b>{riga['Variabile']}</b></span><br>"
-        over = f"<span style='font-size:10px'>Sovraespresso: {riga['Media_Tesi_Sovra']}</span><br>"
-        under = f"<span style='font-size:10px'>Sottoespresso: {riga['Media_Tesi_Sotto']}</span>"
-        return nome_var + over + under
+    # ✅ CUSTOM TOOLTIP
+    try:
+        fig = px.scatter(
+            dati_preparati,
+            x='Log2FoldChange',
+            y='-log10(p-value)',
+            text='EtichettaVariabile' if show_labels else None,
+            hover_data={
+                "EtichettaVariabile": True,
+                "Log2FoldChange": ':.2f',
+                "-log10(p-value)": ':.2f',
+                "Media_Classe_1": ':.2f',
+                "Media_Classe_2": ':.2f',
+                "MediaLog": ':.2f'
+            },
+            color=dati_preparati["MediaLog"] if color_by_media else None,
+            size=dati_preparati["SizeScaled"],
+            color_continuous_scale="RdYlBu_r",
+            size_max=10
+        )
 
-    dati_preparati["tooltip"] = dati_preparati.apply(crea_tooltip, axis=1)
+        fig.update_layout(
+            xaxis=dict(range=[x_min, x_max]),
+            yaxis=dict(range=[0, y_max]),
+            height=1000
+        )
 
-    fig = px.scatter(
-        dati_preparati,
-        x='Log2FoldChange',
-        y='-log10(p-value)',
-        color=dati_preparati['MediaLog'] if color_by_media else None,
-        size=dati_preparati['SizeScaled'],
-        custom_data=["tooltip"],
-        color_continuous_scale='RdYlBu_r',
-        size_max=10,
-        text=None  # ❌ Etichette disattivate
-    )
+        fig.add_trace(go.Scatter(
+            x=[-fold_change_threshold, -fold_change_threshold],
+            y=[0, y_max],
+            mode='lines',
+            line=dict(color='red', dash='dash', width=2),
+            name=f"-Log2FC soglia ({-fold_change_threshold})"
+        ))
 
-    fig.update_traces(
-        hovertemplate="%{customdata[0]}<extra></extra>",
-        marker=dict(size=8)
-    )
+        fig.add_trace(go.Scatter(
+            x=[fold_change_threshold, fold_change_threshold],
+            y=[0, y_max],
+            mode='lines',
+            line=dict(color='red', dash='dash', width=2),
+            name=f"+Log2FC soglia ({fold_change_threshold})"
+        ))
 
-    fig.update_layout(
-        title="Volcano Plot",
-        xaxis_title="Log2 Fold Change",
-        yaxis_title="-log10(p-value)",
-        showlegend=False,
-        height=1000
-    )
+        fig.add_trace(go.Scatter(
+            x=[x_min, x_max],
+            y=[p_value_threshold, p_value_threshold],
+            mode='lines',
+            line=dict(color='blue', dash='dash', width=2),
+            name=f"Soglia -log10(p-value) ({p_value_threshold})"
+        ))
 
-    fig.add_trace(go.Scatter(x=[-fold_change_threshold, -fold_change_threshold], 
-                             y=[0, y_max], 
-                             mode='lines', line=dict(color='red', dash='dash', width=2)))
+        fig.add_trace(go.Scatter(
+            x=[0, 0],
+            y=[0, y_max],
+            mode='lines',
+            line=dict(color='lightgray', dash='dash', width=1.5),
+            name="Log2FC = 0"
+        ))
 
-    fig.add_trace(go.Scatter(x=[fold_change_threshold, fold_change_threshold], 
-                             y=[0, y_max], 
-                             mode='lines', line=dict(color='red', dash='dash', width=2)))
+        st.plotly_chart(fig)
+        st.write("✅ Volcano Plot generato con successo!")
+    except Exception as e:
+        st.error(f"❌ Errore durante la generazione del Volcano Plot: {e}")
+        return
 
-    fig.add_trace(go.Scatter(x=[x_min, x_max], 
-                             y=[p_value_threshold, p_value_threshold], 
-                             mode='lines', line=dict(color='blue', dash='dash', width=2)))
-
-    fig.add_trace(go.Scatter(x=[0, 0], 
-                             y=[0, y_max], 
-                             mode='lines', line=dict(color='lightgray', dash='dash', width=1.5)))
-
-    st.plotly_chart(fig, use_container_width=True)
-    st.write("✅ Volcano Plot generato con successo!")
-
+    # Mostra tabella riepilogativa se le soglie sono state modificate
     if fold_change_threshold != default_fold_change or p_value_threshold != default_p_value:
         st.subheader("🔎 Variabili che superano le soglie impostate")
+
         variabili_significative = dati_preparati[
             (dati_preparati['-log10(p-value)'] > p_value_threshold) & 
             (abs(dati_preparati['Log2FoldChange']) > fold_change_threshold)
-        ][['Variabile', '-log10(p-value)', 'Log2FoldChange']]
+        ][['EtichettaVariabile', '-log10(p-value)', 'Log2FoldChange']]
 
         if not variabili_significative.empty:
             st.dataframe(variabili_significative, use_container_width=True)
