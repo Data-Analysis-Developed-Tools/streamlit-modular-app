@@ -65,9 +65,7 @@ def mostra_volcano_plot():
             text='Variabile' if show_labels else None,
             hover_data={
                 "Variabile": True,
-                "Log2FoldChange": ':.2f',
-                "-log10(p-value)": ':.2f',
-                "MediaLog": ':.2f'
+
             },
             color=dati_preparati["MediaLog"] if color_by_media else None,
             size=dati_preparati["SizeScaled"],
