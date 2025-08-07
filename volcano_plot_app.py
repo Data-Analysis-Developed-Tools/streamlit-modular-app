@@ -36,8 +36,20 @@ def mostra_volcano_plot():
     st.write(f"📊 Soglie impostate: Log2FC={fold_change_threshold}, -log10(p-value)={p_value_threshold}")
 
     try:
-        dati_preparati = prepara_dati(dati, classi, fold_change_threshold, p_value_threshold)
-        st.write("✅ Funzione `prepara_dati` eseguita correttamente.")
+        try:
+    dati_preparati = prepara_dati(dati, classi, fold_change_threshold, p_value_threshold)
+    st.write("✅ Funzione `prepara_dati` eseguita correttamente.")
+
+    # 🔧 Rinominare la colonna contenente le etichette delle variabili
+    if "Variabile" in dati_preparati.columns:
+        dati_preparati = dati_preparati.rename(columns={"Variabile": "EtichettaVariabile"})
+    elif "etichette" in dati_preparati.columns:
+        dati_preparati = dati_preparati.rename(columns={"etichette": "EtichettaVariabile"})
+
+except Exception as e:
+    st.error(f"❌ Errore in `prepara_dati`: {e}")
+    return
+
     except Exception as e:
         st.error(f"❌ Errore in `prepara_dati`: {e}")
         return
