@@ -1,3 +1,4 @@
+from volcano_plot_app import mostra_volcano_plot
 import streamlit as st
 import pandas as pd
 import re  # 📌 Libreria per rimuovere i suffissi numerici
