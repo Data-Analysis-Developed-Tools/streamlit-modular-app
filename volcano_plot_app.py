@@ -66,8 +66,8 @@ def mostra_volcano_plot():
     # Generazione del Volcano Plot con altezza modificata e asse y normale
     try:
         fig = px.scatter(dati_preparati, x='Log2FoldChange', y='-log10(p-value)', 
-                         text='Variabile' if show_labels else None,
-                         hover_data=['Variabile'],
+                         text='EtichettaVariabile' if show_labels else None,
+                         hover_data=['EtichettaVariabile'],
                          color=dati_preparati['MediaLog'] if color_by_media else None,
                          size=dati_preparati['SizeScaled'],
                          color_continuous_scale='RdYlBu_r', size_max=10)
