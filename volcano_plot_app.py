@@ -59,19 +59,32 @@ def mostra_volcano_plot():
 
     try:
         fig = px.scatter(
-            dati_preparati,
-            x='Log2FoldChange',
-            y='-log10(p-value)',
-            text='Variabile' if show_labels else None,
-            hover_data={
-                "Variabile": True,
+        dati_preparati,
+        x='Log2FoldChange',
+        y='-log10(p-value)',
+        color=dati_preparati["MediaLog"] if color_by_media else None,
+        size=dati_preparati["SizeScaled"],
+        custom_data=["Variabile", "Log2FoldChange", "-log10(p-value)", "MediaLog"],
+        color_continuous_scale="RdYlBu_r",
+        size_max=10
+        )
 
-            },
             color=dati_preparati["MediaLog"] if color_by_media else None,
             size=dati_preparati["SizeScaled"],
             color_continuous_scale="RdYlBu_r",
             size_max=10
         )
+
+        fig.update_traces(
+        hovertemplate=(
+        "<span style='font-size:20px'><b>%{customdata[0]}</b></span><br>"
+        "<span style='font-size:18px'>Log2FC: %{customdata[1]:.2f}</span><br>"
+        "<span style='font-size:18px'>-log10(p): %{customdata[2]:.2f}</span><br>"
+        "<span style='font-size:18px'>MediaLog: %{customdata[3]:.2f}</span><br>"
+        "<extra></extra>"
+        )
+)
+
 
         fig.update_layout(
             xaxis=dict(range=[x_min, x_max]),
