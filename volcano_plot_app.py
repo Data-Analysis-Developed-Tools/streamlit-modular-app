@@ -14,7 +14,9 @@ def mostra_volcano_plot():
     st.write("✅ Dati filtrati trovati in session_state.")
 
     dati = st.session_state["dati_filtrati"]
-    classi = [st.session_state.get("class_1"), st.session_state.get("class_2")]
+    class_1 = st.session_state.get("class_1", "Classe 1")
+    class_2 = st.session_state.get("class_2", "Classe 2")
+    classi = [class_1, class_2]
 
     if None in classi:
         st.error("⚠️ Le classi non sono state selezionate correttamente.")
@@ -39,27 +41,38 @@ def mostra_volcano_plot():
     try:
         dati_preparati = prepara_dati(dati, classi, fold_change_threshold, p_value_threshold)
         st.write("✅ Funzione `prepara_dati` eseguita correttamente.")
+    except Exception as e:
+        st.error(f"❌ Errore in `prepara_dati`: {e}")
+        return
 
-        if dati_preparati is None or dati_preparati.empty:
-            st.error("⚠️ Il dataframe 'dati_preparati' è vuoto! Controlla i parametri di filtraggio.")
-            return
+    if dati_preparati is None or dati_preparati.empty:
+        st.error("⚠️ Il dataframe 'dati_preparati' è vuoto! Controlla i parametri di filtraggio.")
+        return
 
-        # Associa i nomi delle classi reali alle colonne
-        class_1 = st.session_state.get("class_1", "Classe 1")
-        class_2 = st.session_state.get("class_2", "Classe 2")
-        dati_preparati[class_1] = dati_preparati["Media_Classe_1"]
-        dati_preparati[class_2] = dati_preparati["Media_Classe_2"]
+    # 🔢 Calcolo manuale delle medie se non già presenti
+    if class_1 not in dati_preparati.columns or class_2 not in dati_preparati.columns:
+        medie = dati.groupby('Variabile')[['Classe'] + list(dati.columns[2:])].mean().reset_index()
+        medie_classi = dati.groupby(['Variabile', 'Classe']).mean().reset_index()
+        medie_pivot = medie_classi.pivot(index='Variabile', columns='Classe')
+        try:
+            dati_preparati[class_1] = dati_preparati['Variabile'].map(medie_pivot.loc[:, ('Media', class_1)])
+            dati_preparati[class_2] = dati_preparati['Variabile'].map(medie_pivot.loc[:, ('Media', class_2)])
+        except:
+            dati_preparati[class_1] = np.nan
+            dati_preparati[class_2] = np.nan
 
-        if size_by_media and n_base is not None:
-            dati_preparati["SizeScaled"] = np.power(n_base, dati_preparati["MediaLog"])
-        else:
-            dati_preparati["SizeScaled"] = 0.0001
+    # 📏 Calcolo dimensione punti
+    if size_by_media and n_base is not None:
+        dati_preparati["SizeScaled"] = np.power(n_base, dati_preparati["MediaLog"])
+    else:
+        dati_preparati["SizeScaled"] = 0.0001
 
-        x_min = min(dati_preparati['Log2FoldChange'].min(), -fold_change_threshold * 1.2)
-        x_max = max(dati_preparati['Log2FoldChange'].max(), fold_change_threshold * 1.2)
-        y_max = max(dati_preparati['-log10(p-value)'].max(), p_value_threshold * 1.2)
+    x_min = min(dati_preparati['Log2FoldChange'].min(), -fold_change_threshold * 1.2)
+    x_max = max(dati_preparati['Log2FoldChange'].max(), fold_change_threshold * 1.2)
+    y_max = max(dati_preparati['-log10(p-value)'].max(), p_value_threshold * 1.2)
 
-        # Tooltip personalizzato
+    try:
+        # 🧾 Tooltip personalizzato
         dati_preparati["customtooltip"] = dati_preparati.apply(
             lambda r: (
                 f"<span style='font-size:20px'><b>{r['Variabile']}</b></span><br>"
@@ -98,15 +111,12 @@ def mostra_volcano_plot():
             showlegend=False
         )
 
-        # Linee soglia
-        fig.add_trace(go.Scatter(x=[-fold_change_threshold, -fold_change_threshold],
-                                 y=[0, y_max], mode='lines',
+        # ➕ Linee soglia
+        fig.add_trace(go.Scatter(x=[-fold_change_threshold, -fold_change_threshold], y=[0, y_max], mode='lines',
                                  line=dict(color='red', dash='dash', width=2)))
-        fig.add_trace(go.Scatter(x=[fold_change_threshold, fold_change_threshold],
-                                 y=[0, y_max], mode='lines',
+        fig.add_trace(go.Scatter(x=[fold_change_threshold, fold_change_threshold], y=[0, y_max], mode='lines',
                                  line=dict(color='red', dash='dash', width=2)))
-        fig.add_trace(go.Scatter(x=[x_min, x_max],
-                                 y=[p_value_threshold, p_value_threshold], mode='lines',
+        fig.add_trace(go.Scatter(x=[x_min, x_max], y=[p_value_threshold, p_value_threshold], mode='lines',
                                  line=dict(color='blue', dash='dash', width=2)))
         fig.add_trace(go.Scatter(x=[0, 0], y=[0, y_max], mode='lines',
                                  line=dict(color='lightgray', dash='dash', width=1.5)))
@@ -118,7 +128,7 @@ def mostra_volcano_plot():
         st.error(f"❌ Errore durante la generazione del Volcano Plot: {e}")
         return
 
-    # Tabella delle variabili significative
+    # 📋 Tabella riepilogo se soglie attive
     if fold_change_threshold != default_fold_change or p_value_threshold != default_p_value:
         st.subheader("🔎 Variabili che superano le soglie impostate")
         variabili_significative = dati_preparati[
