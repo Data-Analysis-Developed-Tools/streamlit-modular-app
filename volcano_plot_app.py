@@ -39,11 +39,16 @@ def mostra_volcano_plot():
         dati_preparati = prepara_dati(dati, classi, fold_change_threshold, p_value_threshold)
         st.write("✅ Funzione `prepara_dati` eseguita correttamente.")
 
-        # 🔧 Rinominare la colonna contenente le etichette delle variabili
-        if "Variabile" in dati_preparati.columns:
-            dati_preparati = dati_preparati.rename(columns={"Variabile": "EtichettaVariabile"})
-        elif "etichette" in dati_preparati.columns:
-            dati_preparati = dati_preparati.rename(columns={"etichette": "EtichettaVariabile"})
+        # 🔧 Rinominare in modo robusto la colonna delle etichette
+        col_etichetta = None
+        for possibile in ["EtichettaVariabile", "Variabile", "etichette"]:
+            if possibile in dati_preparati.columns:
+                col_etichetta = possibile
+                break
+        if col_etichetta is None:
+            st.error("❌ Nessuna colonna trovata per le etichette delle variabili.")
+            return
+        dati_preparati = dati_preparati.rename(columns={col_etichetta: "EtichettaVariabile"})
 
     except Exception as e:
         st.error(f"❌ Errore in `prepara_dati`: {e}")
@@ -63,29 +68,13 @@ def mostra_volcano_plot():
     y_max = max(dati_preparati['-log10(p-value)'].max(), p_value_threshold * 1.2)
 
     try:
-        # 🔍 Calcolo delle medie per ogni classe
-        colonne_campioni = dati.columns[1:]
-        classi_colonne = dati.iloc[0, 1:].values  # array dei nomi delle classi
-        dati_numerici = dati.iloc[1:].copy()
-        dati_numerici.reset_index(drop=True, inplace=True)
-        dati_numerici["EtichettaVariabile"] = dati.iloc[1:, 0].values
+        # Calcolo delle medie per ogni classe
+        media_class_1 = dati[classi[0]].mean(axis=1)
+        media_class_2 = dati[classi[1]].mean(axis=1)
+        dati_preparati["MediaClasse1"] = media_class_1.values
+        dati_preparati["MediaClasse2"] = media_class_2.values
 
-        maschera_classe1 = [col for col, cls in zip(colonne_campioni, classi_colonne) if cls == classi[0]]
-        maschera_classe2 = [col for col, cls in zip(colonne_campioni, classi_colonne) if cls == classi[1]]
-
-        media_class_1 = dati_numerici[maschera_classe1].mean(axis=1)
-        media_class_2 = dati_numerici[maschera_classe2].mean(axis=1)
-
-        dati_preparati = dati_preparati.merge(
-            dati_numerici[["EtichettaVariabile"]].assign(
-                MediaClasse1=media_class_1.values,
-                MediaClasse2=media_class_2.values
-            ),
-            on="EtichettaVariabile",
-            how="left"
-        )
-
-        # Tooltip HTML personalizzato
+        # Tooltip personalizzato
         def crea_tooltip(row):
             nome = f"<b style='font-size:16px'>{row['EtichettaVariabile']}</b><br>"
             if row['Log2FoldChange'] > 0:
@@ -135,15 +124,18 @@ def mostra_volcano_plot():
 
     except Exception as e:
         st.error(f"❌ Errore durante la generazione del Volcano Plot: {e}")
+        return
 
     if fold_change_threshold != default_fold_change or p_value_threshold != default_p_value:
         st.subheader("🔎 Variabili che superano le soglie impostate")
-        variabili_significative = dati_preparati[
-            (dati_preparati['-log10(p-value)'] > p_value_threshold) &
-            (abs(dati_preparati['Log2FoldChange']) > fold_change_threshold)
-        ][['EtichettaVariabile', '-log10(p-value)', 'Log2FoldChange']]
-
-        if not variabili_significative.empty:
-            st.dataframe(variabili_significative, use_container_width=True)
-        else:
-            st.write("❌ Nessuna variabile supera entrambe le soglie impostate.")
+        try:
+            variabili_significative = dati_preparati[
+                (dati_preparati['-log10(p-value)'] > p_value_threshold) &
+                (abs(dati_preparati['Log2FoldChange']) > fold_change_threshold)
+            ][['EtichettaVariabile', '-log10(p-value)', 'Log2FoldChange']]
+            if not variabili_significative.empty:
+                st.dataframe(variabili_significative, use_container_width=True)
+            else:
+                st.write("❌ Nessuna variabile supera entrambe le soglie impostate.")
+        except KeyError as e:
+            st.error(f"❌ Errore nel mostrare la tabella finale: colonna mancante {e}")
