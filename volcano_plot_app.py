@@ -36,19 +36,14 @@ def mostra_volcano_plot():
     st.write(f"📊 Soglie impostate: Log2FC={fold_change_threshold}, -log10(p-value)={p_value_threshold}")
 
     try:
-        try:
-    dati_preparati = prepara_dati(dati, classi, fold_change_threshold, p_value_threshold)
-    st.write("✅ Funzione `prepara_dati` eseguita correttamente.")
+        dati_preparati = prepara_dati(dati, classi, fold_change_threshold, p_value_threshold)
+        st.write("✅ Funzione `prepara_dati` eseguita correttamente.")
 
-    # 🔧 Rinominare la colonna contenente le etichette delle variabili
-    if "Variabile" in dati_preparati.columns:
-        dati_preparati = dati_preparati.rename(columns={"Variabile": "EtichettaVariabile"})
-    elif "etichette" in dati_preparati.columns:
-        dati_preparati = dati_preparati.rename(columns={"etichette": "EtichettaVariabile"})
-
-except Exception as e:
-    st.error(f"❌ Errore in `prepara_dati`: {e}")
-    return
+        # 🔧 Rinominare la colonna contenente le etichette delle variabili
+        if "Variabile" in dati_preparati.columns:
+            dati_preparati = dati_preparati.rename(columns={"Variabile": "EtichettaVariabile"})
+        elif "etichette" in dati_preparati.columns:
+            dati_preparati = dati_preparati.rename(columns={"etichette": "EtichettaVariabile"})
 
     except Exception as e:
         st.error(f"❌ Errore in `prepara_dati`: {e}")
@@ -132,7 +127,7 @@ except Exception as e:
         variabili_significative = dati_preparati[
             (dati_preparati['-log10(p-value)'] > p_value_threshold) &
             (abs(dati_preparati['Log2FoldChange']) > fold_change_threshold)
-        ][['Variabile', '-log10(p-value)', 'Log2FoldChange']]
+        ][['EtichettaVariabile', '-log10(p-value)', 'Log2FoldChange']]
 
         if not variabili_significative.empty:
             st.dataframe(variabili_significative, use_container_width=True)
