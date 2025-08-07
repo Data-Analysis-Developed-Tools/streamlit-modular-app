@@ -69,11 +69,42 @@ def mostra_volcano_plot():
             size_max=10
         )
 
-        fig.update_layout(
-            xaxis=dict(range=[x_min, x_max]),
-            yaxis=dict(range=[0, y_max]),
-            height=1000
-        )
+        # Tooltip personalizzato
+def crea_tooltip(riga):
+    nome_var = f"<span style='font-size:16px'><b>{riga['EtichettaVariabile']}</b></span><br>"
+    over = f"<span style='font-size:10px'>Sovraespresso: {riga['Media_Tesi_Sovra']}</span><br>"
+    under = f"<span style='font-size:10px'>Sottoespresso: {riga['Media_Tesi_Sotto']}</span>"
+    return nome_var + over + under
+
+# Crea una nuova colonna con il contenuto formattato
+dati_preparati["tooltip"] = dati_preparati.apply(crea_tooltip, axis=1)
+
+# Genera il Volcano Plot
+fig = px.scatter(
+    dati_preparati,
+    x='Log2FoldChange',
+    y='-log10(p-value)',
+    color=dati_preparati['MediaLog'] if color_by_media else None,
+    size=dati_preparati['SizeScaled'],
+    custom_data=["tooltip"],
+    color_continuous_scale='RdYlBu_r',
+    size_max=10
+)
+
+fig.update_traces(
+    hovertemplate="%{customdata[0]}<extra></extra>",
+    marker=dict(size=8)
+)
+
+fig.update_layout(
+    title="Volcano Plot",
+    xaxis_title="Log2 Fold Change",
+    yaxis_title="-log10(p-value)",
+    showlegend=False,
+    height=1000
+)
+
+st.plotly_chart(fig, use_container_width=True)
 
         fig.add_trace(go.Scatter(x=[-fold_change_threshold, -fold_change_threshold], 
                                  y=[0, y_max], 
