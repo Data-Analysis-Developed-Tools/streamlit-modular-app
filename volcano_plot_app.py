@@ -39,30 +39,26 @@ def mostra_volcano_plot():
     try:
         dati_preparati = prepara_dati(dati, classi, fold_change_threshold, p_value_threshold)
         st.write("✅ Funzione `prepara_dati` eseguita correttamente.")
-    except Exception as e:
-        st.error(f"❌ Errore in `prepara_dati`: {e}")
-        return
 
-    if dati_preparati is None or dati_preparati.empty:
-        st.error("⚠️ Il dataframe 'dati_preparati' è vuoto! Controlla i parametri di filtraggio.")
-        return
+        if dati_preparati is None or dati_preparati.empty:
+            st.error("⚠️ Il dataframe 'dati_preparati' è vuoto! Controlla i parametri di filtraggio.")
+            return
 
-    # Associa i nomi delle classi reali alle colonne
-    class_1 = st.session_state.get("class_1", "Classe 1")
-    class_2 = st.session_state.get("class_2", "Classe 2")
-    dati_preparati[class_1] = dati_preparati["Media_Classe_1"]
-    dati_preparati[class_2] = dati_preparati["Media_Classe_2"]
+        # Associa i nomi delle classi reali alle colonne
+        class_1 = st.session_state.get("class_1", "Classe 1")
+        class_2 = st.session_state.get("class_2", "Classe 2")
+        dati_preparati[class_1] = dati_preparati["Media_Classe_1"]
+        dati_preparati[class_2] = dati_preparati["Media_Classe_2"]
 
-    if size_by_media and n_base is not None:
-        dati_preparati["SizeScaled"] = np.power(n_base, dati_preparati["MediaLog"])
-    else:
-        dati_preparati["SizeScaled"] = 0.0001
+        if size_by_media and n_base is not None:
+            dati_preparati["SizeScaled"] = np.power(n_base, dati_preparati["MediaLog"])
+        else:
+            dati_preparati["SizeScaled"] = 0.0001
 
-    x_min = min(dati_preparati['Log2FoldChange'].min(), -fold_change_threshold * 1.2)
-    x_max = max(dati_preparati['Log2FoldChange'].max(), fold_change_threshold * 1.2)
-    y_max = max(dati_preparati['-log10(p-value)'].max(), p_value_threshold * 1.2)
+        x_min = min(dati_preparati['Log2FoldChange'].min(), -fold_change_threshold * 1.2)
+        x_max = max(dati_preparati['Log2FoldChange'].max(), fold_change_threshold * 1.2)
+        y_max = max(dati_preparati['-log10(p-value)'].max(), p_value_threshold * 1.2)
 
-    try:
         # Tooltip personalizzato
         dati_preparati["customtooltip"] = dati_preparati.apply(
             lambda r: (
@@ -117,6 +113,7 @@ def mostra_volcano_plot():
 
         st.plotly_chart(fig)
         st.write("✅ Volcano Plot generato con successo!")
+
     except Exception as e:
         st.error(f"❌ Errore durante la generazione del Volcano Plot: {e}")
         return
