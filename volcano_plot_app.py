@@ -63,15 +63,29 @@ def mostra_volcano_plot():
     y_max = max(dati_preparati['-log10(p-value)'].max(), p_value_threshold * 1.2)
 
     try:
-        # Calcolo delle medie per ogni classe
-        media_class_1 = dati[classi[0]].mean(axis=1)
-        media_class_2 = dati[classi[1]].mean(axis=1)
+        # 🔍 Calcolo delle medie per ogni classe
+        colonne_campioni = dati.columns[1:]
+        classi_colonne = dati.iloc[0, 1:].values  # array dei nomi delle classi
+        dati_numerici = dati.iloc[1:].copy()
+        dati_numerici.reset_index(drop=True, inplace=True)
+        dati_numerici["EtichettaVariabile"] = dati.iloc[1:, 0].values
 
-        # Associa le medie alle variabili nel dataframe preparato
-        dati_preparati["MediaClasse1"] = media_class_1.values
-        dati_preparati["MediaClasse2"] = media_class_2.values
+        maschera_classe1 = [col for col, cls in zip(colonne_campioni, classi_colonne) if cls == classi[0]]
+        maschera_classe2 = [col for col, cls in zip(colonne_campioni, classi_colonne) if cls == classi[1]]
 
-        # Crea tooltip personalizzato
+        media_class_1 = dati_numerici[maschera_classe1].mean(axis=1)
+        media_class_2 = dati_numerici[maschera_classe2].mean(axis=1)
+
+        dati_preparati = dati_preparati.merge(
+            dati_numerici[["EtichettaVariabile"]].assign(
+                MediaClasse1=media_class_1.values,
+                MediaClasse2=media_class_2.values
+            ),
+            on="EtichettaVariabile",
+            how="left"
+        )
+
+        # Tooltip HTML personalizzato
         def crea_tooltip(row):
             nome = f"<b style='font-size:16px'>{row['EtichettaVariabile']}</b><br>"
             if row['Log2FoldChange'] > 0:
