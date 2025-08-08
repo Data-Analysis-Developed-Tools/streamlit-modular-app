@@ -89,6 +89,7 @@ def mostra_volcano_plot():
             size_max=10
         )
 
+        # ✅ Tooltip personalizzato
         fig.update_traces(
             customdata=np.stack([
                 dati_preparati["Variabile"],
@@ -137,6 +138,7 @@ def mostra_volcano_plot():
 
         st.plotly_chart(fig)
         st.write("✅ Volcano Plot generato con successo!")
+
     except Exception as e:
         st.error(f"❌ Errore durante la generazione del Volcano Plot: {e}")
 
