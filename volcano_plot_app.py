@@ -85,24 +85,39 @@ def mostra_volcano_plot():
     x_max = max(x_max_raw, fold_change_threshold * 1.2) + x_margin
     y_max = y_max_raw + y_margin  
 
-    # Volcano Plot
+    # Volcano Plot con tooltip personalizzato
     try:
+        # 🔧 Costruiamo il campo customdata per tooltip
+        dati_preparati["custom_variable"] = dati_preparati["Variabile"]
+        dati_preparati["media_1"] = dati_preparati[f"Media {classi[0]}"]
+        dati_preparati["media_2"] = dati_preparati[f"Media {classi[1]}"]
+
         fig = px.scatter(
             dati_preparati,
             x='Log2FoldChange',
-            y='-log10(p-value)', 
-            hover_data={
-                'Variabile': True,
-                f'Media {classi[0]}': True,
-                f'Media {classi[1]}': True,
-                'Log2FoldChange': True,
-                '-log10(p-value)': True,
-                'MediaLog': True
-            },
+            y='-log10(p-value)',
             color=dati_preparati['MediaLog'] if color_by_media else None,
             size=dati_preparati['SizeScaled'],
             color_continuous_scale='RdYlBu_r',
             size_max=10
+        )
+
+        fig.update_traces(
+            customdata=np.stack([
+                dati_preparati["custom_variable"],
+                dati_preparati["media_1"],
+                dati_preparati["media_2"],
+                dati_preparati["Log2FoldChange"],
+                dati_preparati["-log10(p-value)"]
+            ], axis=-1),
+            hovertemplate="""
+            <span style="font-size: 35px;"><b>%{customdata[0]}</b></span><br><br>
+            <b>Media """ + classi[0] + """:</b> %{customdata[1]:.3f}<br>
+            <b>Media """ + classi[1] + """:</b> %{customdata[2]:.3f}<br>
+            <b>Log2FoldChange:</b> %{customdata[3]:.3f}<br>
+            <b>-log10(p-value):</b> %{customdata[4]:.3f}<br>
+            <extra></extra>
+            """
         )
 
         fig.update_layout(
