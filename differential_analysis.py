@@ -60,12 +60,22 @@ if file is not None:
 
         if st.sidebar.button("✅ Conferma selezione"):
             if class_1 and class_2 and class_1 != class_2:
-                dati_filtrati = st.session_state["dati_completi"].loc[:, 
-                    st.session_state["dati_completi"].columns.get_level_values(1).isin([class_1, class_2])]
+                dati_completi = st.session_state["dati_completi"]
+
+                # 🔍 Seleziona solo le colonne per le due classi
+                dati_filtrati = dati_completi.loc[:, dati_completi.columns.get_level_values(1).isin([class_1, class_2])]
 
                 st.session_state["dati_filtrati"] = dati_filtrati
                 st.session_state["class_1"] = class_1
                 st.session_state["class_2"] = class_2
+
+                # 📊 Calcolo della media per ciascuna variabile (riga) per ogni tesi
+                media_tesi1 = dati_filtrati.xs(class_1, level=1, axis=1).mean(axis=1)
+                media_tesi2 = dati_filtrati.xs(class_2, level=1, axis=1).mean(axis=1)
+
+                # ✅ Salvataggio nel session_state
+                st.session_state[f"media_tesi_{class_1}"] = media_tesi1
+                st.session_state[f"media_tesi_{class_2}"] = media_tesi2
 
                 st.sidebar.success("✅ Selezione confermata! Scegli un'analisi.")
 
