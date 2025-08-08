@@ -25,9 +25,6 @@ def mostra_volcano_plot():
     fold_change_threshold = st.session_state.get("fold_change_threshold", 0.0)
     p_value_threshold = st.session_state.get("p_value_threshold", 0.05)
 
-    # Etichette mostrate di default
-    show_labels = True
-
     size_by_media = st.sidebar.checkbox("Dimensiona punti per media valori (n^MediaLog)", value=False)
     color_by_media = st.sidebar.checkbox("Colora punti per media valori", value=False)
 
@@ -63,7 +60,7 @@ def mostra_volcano_plot():
     except Exception as e:
         st.warning(f"⚠️ Errore durante il recupero delle medie: {e}")
 
-    # **Etichette per le classi**
+    # Etichette per le classi
     st.markdown(f"""
     <div style="display: flex; justify-content: space-between; margin-bottom: 12px; margin-top: 10px;">
         <h3 style="color: red; text-align: left;">🔴 Over-expression in {classi[1]}</h3>
@@ -71,11 +68,13 @@ def mostra_volcano_plot():
     </div>
     """, unsafe_allow_html=True)
 
+    # Calcolo dimensione punti
     if size_by_media and n_base is not None:
         dati_preparati["SizeScaled"] = np.power(n_base, dati_preparati["MediaLog"])
     else:
         dati_preparati["SizeScaled"] = 0.0001  
 
+    # Calcolo limiti assi
     x_min_raw, x_max_raw = dati_preparati['Log2FoldChange'].min(), dati_preparati['Log2FoldChange'].max()
     y_max_raw = dati_preparati['-log10(p-value)'].max()
 
@@ -86,12 +85,12 @@ def mostra_volcano_plot():
     x_max = max(x_max_raw, fold_change_threshold * 1.2) + x_margin
     y_max = y_max_raw + y_margin  
 
+    # Volcano Plot
     try:
         fig = px.scatter(
             dati_preparati,
             x='Log2FoldChange',
             y='-log10(p-value)', 
-            text='Variabile',
             hover_data={
                 'Variabile': True,
                 f'Media {classi[0]}': True,
@@ -113,6 +112,7 @@ def mostra_volcano_plot():
             margin=dict(l=150, r=150, t=200, b=100)
         )
 
+        # Linee soglia
         fig.add_trace(go.Scatter(x=[-fold_change_threshold, -fold_change_threshold], 
                                  y=[0, y_max], 
                                  mode='lines', line=dict(color='red', dash='dash', width=2),
@@ -138,6 +138,7 @@ def mostra_volcano_plot():
     except Exception as e:
         st.error(f"❌ Errore durante la generazione del Volcano Plot: {e}")
 
+    # Tabella variabili significative
     st.subheader("🔎 Variabili che superano le soglie impostate")
 
     if "-log10(p-value)" in dati_preparati.columns and "Log2FoldChange" in dati_preparati.columns:
