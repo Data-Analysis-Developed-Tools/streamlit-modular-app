@@ -8,7 +8,6 @@ from components.data_loader import prepara_dati
 def mostra_volcano_plot():
     st.title("Volcano Plot Interattivo")
 
-    # Controlla se i dati filtrati esistono in session_state
     if "dati_filtrati" not in st.session_state or st.session_state["dati_filtrati"] is None:
         st.error("⚠️ Nessun dato filtrato disponibile. Torna alla homepage e seleziona le classi.")
         return
@@ -17,7 +16,6 @@ def mostra_volcano_plot():
     dati = st.session_state["dati_filtrati"]
     classi = [st.session_state.get("class_1"), st.session_state.get("class_2")]
 
-    # Controlla se le classi sono state selezionate
     if None in classi or len(classi) < 2:
         st.error("⚠️ Le classi non sono state selezionate correttamente.")
         return
@@ -35,7 +33,6 @@ def mostra_volcano_plot():
 
     st.write(f"📊 Soglie impostate: Log2FC={fold_change_threshold}, -log10(p-value)={p_value_threshold}")
 
-    # Prepara i dati per il Volcano Plot
     try:
         dati_preparati = prepara_dati(dati, classi, fold_change_threshold, p_value_threshold)
         st.success("✅ Funzione `prepara_dati` eseguita correttamente.")  
@@ -47,7 +44,6 @@ def mostra_volcano_plot():
         st.error("⚠️ Il dataframe 'dati_preparati' è vuoto! Controlla i parametri di filtraggio.")
         return
 
-    # 🔍 Aggiungiamo le due medie nel DataFrame preparato per il tooltip
     try:
         media_1 = st.session_state.get(f"media_tesi_{classi[0]}")
         media_2 = st.session_state.get(f"media_tesi_{classi[1]}")
@@ -60,7 +56,6 @@ def mostra_volcano_plot():
     except Exception as e:
         st.warning(f"⚠️ Errore durante il recupero delle medie: {e}")
 
-    # Etichette per le classi
     st.markdown(f"""
     <div style="display: flex; justify-content: space-between; margin-bottom: 12px; margin-top: 10px;">
         <h3 style="color: red; text-align: left;">🔴 Over-expression in {classi[1]}</h3>
@@ -68,13 +63,11 @@ def mostra_volcano_plot():
     </div>
     """, unsafe_allow_html=True)
 
-    # Calcolo dimensione punti
     if size_by_media and n_base is not None:
         dati_preparati["SizeScaled"] = np.power(n_base, dati_preparati["MediaLog"])
     else:
         dati_preparati["SizeScaled"] = 0.0001  
 
-    # Calcolo limiti assi
     x_min_raw, x_max_raw = dati_preparati['Log2FoldChange'].min(), dati_preparati['Log2FoldChange'].max()
     y_max_raw = dati_preparati['-log10(p-value)'].max()
 
@@ -85,13 +78,7 @@ def mostra_volcano_plot():
     x_max = max(x_max_raw, fold_change_threshold * 1.2) + x_margin
     y_max = y_max_raw + y_margin  
 
-    # Volcano Plot con tooltip personalizzato
     try:
-        # 🔧 Costruiamo il campo customdata per tooltip
-        dati_preparati["custom_variable"] = dati_preparati["Variabile"]
-        dati_preparati["media_1"] = dati_preparati[f"Media {classi[0]}"]
-        dati_preparati["media_2"] = dati_preparati[f"Media {classi[1]}"]
-
         fig = px.scatter(
             dati_preparati,
             x='Log2FoldChange',
@@ -104,20 +91,21 @@ def mostra_volcano_plot():
 
         fig.update_traces(
             customdata=np.stack([
-                dati_preparati["custom_variable"],
-                dati_preparati["media_1"],
-                dati_preparati["media_2"],
+                dati_preparati["Variabile"],
+                dati_preparati[f"Media {classi[0]}"],
+                dati_preparati[f"Media {classi[1]}"],
                 dati_preparati["Log2FoldChange"],
                 dati_preparati["-log10(p-value)"]
             ], axis=-1),
-            hovertemplate="""
-            <span style="font-size: 35px;"><b>%{customdata[0]}</b></span><br><br>
-            <b>Media """ + classi[0] + """:</b> %{customdata[1]:.3f}<br>
-            <b>Media """ + classi[1] + """:</b> %{customdata[2]:.3f}<br>
-            <b>Log2FoldChange:</b> %{customdata[3]:.3f}<br>
-            <b>-log10(p-value):</b> %{customdata[4]:.3f}<br>
-            <extra></extra>
-            """
+            hovertemplate=
+                "━━━━━━━━━━━━━━━━━━<br>" +
+                "<b>🔬 %{customdata[0]}</b><br>" +
+                "━━━━━━━━━━━━━━━━━━<br>" +
+                f"<b>Media {classi[0]}:</b> %{customdata[1]:.3f}<br>" +
+                f"<b>Media {classi[1]}:</b> %{customdata[2]:.3f}<br>" +
+                "<b>Log2FoldChange:</b> %{customdata[3]:.3f}<br>" +
+                "<b>-log10(p-value):</b> %{customdata[4]:.3f}<br>" +
+                "<extra></extra>"
         )
 
         fig.update_layout(
@@ -127,7 +115,6 @@ def mostra_volcano_plot():
             margin=dict(l=150, r=150, t=200, b=100)
         )
 
-        # Linee soglia
         fig.add_trace(go.Scatter(x=[-fold_change_threshold, -fold_change_threshold], 
                                  y=[0, y_max], 
                                  mode='lines', line=dict(color='red', dash='dash', width=2),
@@ -153,7 +140,6 @@ def mostra_volcano_plot():
     except Exception as e:
         st.error(f"❌ Errore durante la generazione del Volcano Plot: {e}")
 
-    # Tabella variabili significative
     st.subheader("🔎 Variabili che superano le soglie impostate")
 
     if "-log10(p-value)" in dati_preparati.columns and "Log2FoldChange" in dati_preparati.columns:
