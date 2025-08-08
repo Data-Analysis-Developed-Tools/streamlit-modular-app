@@ -99,8 +99,8 @@ def mostra_volcano_plot():
             ], axis=-1),
             hovertemplate="""
             <b>🔬 %{customdata[0]}</b><br><br>
-            Media """ + classi[0] + """: %{customdata[1]:.3f}<br>
-            Media """ + classi[1] + """: %{customdata[2]:.3f}<br>
+            Media """ + classi[0] + """: %{customdata[1]:.0f}<br>
+            Media """ + classi[1] + """: %{customdata[2]:.0f}<br>
             Log2FoldChange: %{customdata[3]:.3f}<br>
             -log10(p-value): %{customdata[4]:.3f}<br>
             <extra></extra>
