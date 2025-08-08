@@ -89,7 +89,6 @@ def mostra_volcano_plot():
             size_max=10
         )
 
-        # ✅ Tooltip personalizzato
         fig.update_traces(
             customdata=np.stack([
                 dati_preparati["Variabile"],
@@ -98,15 +97,14 @@ def mostra_volcano_plot():
                 dati_preparati["Log2FoldChange"],
                 dati_preparati["-log10(p-value)"]
             ], axis=-1),
-            hovertemplate=
-                "━━━━━━━━━━━━━━━━━━<br>" +
-                "<b>🔬 %{customdata[0]}</b><br>" +
-                "━━━━━━━━━━━━━━━━━━<br>" +
-                f"<b>Media {classi[0]}:</b> %{customdata[1]:.3f}<br>" +
-                f"<b>Media {classi[1]}:</b> %{customdata[2]:.3f}<br>" +
-                "<b>Log2FoldChange:</b> %{customdata[3]:.3f}<br>" +
-                "<b>-log10(p-value):</b> %{customdata[4]:.3f}<br>" +
-                "<extra></extra>"
+            hovertemplate="""
+            <b>🔬 %{customdata[0]}</b><br><br>
+            Media """ + classi[0] + """: %{customdata[1]:.3f}<br>
+            Media """ + classi[1] + """: %{customdata[2]:.3f}<br>
+            Log2FoldChange: %{customdata[3]:.3f}<br>
+            -log10(p-value): %{customdata[4]:.3f}<br>
+            <extra></extra>
+            """
         )
 
         fig.update_layout(
