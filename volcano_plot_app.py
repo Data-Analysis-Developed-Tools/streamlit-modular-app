@@ -22,10 +22,12 @@ def mostra_volcano_plot():
         st.error("⚠️ Le classi non sono state selezionate correttamente.")
         return
 
-    # Recupera i parametri impostati nella sidebar
     fold_change_threshold = st.session_state.get("fold_change_threshold", 0.0)
     p_value_threshold = st.session_state.get("p_value_threshold", 0.05)
-    show_labels = st.sidebar.checkbox("Mostra etichette delle variabili", value=True)
+
+    # Etichette mostrate di default
+    show_labels = True
+
     size_by_media = st.sidebar.checkbox("Dimensiona punti per media valori (n^MediaLog)", value=False)
     color_by_media = st.sidebar.checkbox("Colora punti per media valori", value=False)
 
@@ -48,6 +50,19 @@ def mostra_volcano_plot():
         st.error("⚠️ Il dataframe 'dati_preparati' è vuoto! Controlla i parametri di filtraggio.")
         return
 
+    # 🔍 Aggiungiamo le due medie nel DataFrame preparato per il tooltip
+    try:
+        media_1 = st.session_state.get(f"media_tesi_{classi[0]}")
+        media_2 = st.session_state.get(f"media_tesi_{classi[1]}")
+
+        if media_1 is not None and media_2 is not None:
+            dati_preparati[f"Media {classi[0]}"] = media_1.values
+            dati_preparati[f"Media {classi[1]}"] = media_2.values
+        else:
+            st.warning("⚠️ Le medie non sono disponibili nel session_state.")
+    except Exception as e:
+        st.warning(f"⚠️ Errore durante il recupero delle medie: {e}")
+
     # **Etichette per le classi**
     st.markdown(f"""
     <div style="display: flex; justify-content: space-between; margin-bottom: 12px; margin-top: 10px;">
@@ -56,13 +71,11 @@ def mostra_volcano_plot():
     </div>
     """, unsafe_allow_html=True)
 
-    # **Generazione del Volcano Plot**
     if size_by_media and n_base is not None:
         dati_preparati["SizeScaled"] = np.power(n_base, dati_preparati["MediaLog"])
     else:
         dati_preparati["SizeScaled"] = 0.0001  
 
-    # Calcoliamo i limiti effettivi della scala
     x_min_raw, x_max_raw = dati_preparati['Log2FoldChange'].min(), dati_preparati['Log2FoldChange'].max()
     y_max_raw = dati_preparati['-log10(p-value)'].max()
 
@@ -74,12 +87,24 @@ def mostra_volcano_plot():
     y_max = y_max_raw + y_margin  
 
     try:
-        fig = px.scatter(dati_preparati, x='Log2FoldChange', y='-log10(p-value)', 
-                         text='Variabile' if show_labels else None,
-                         hover_data=['Variabile'],
-                         color=dati_preparati['MediaLog'] if color_by_media else None,
-                         size=dati_preparati['SizeScaled'],
-                         color_continuous_scale='RdYlBu_r', size_max=10)
+        fig = px.scatter(
+            dati_preparati,
+            x='Log2FoldChange',
+            y='-log10(p-value)', 
+            text='Variabile',
+            hover_data={
+                'Variabile': True,
+                f'Media {classi[0]}': True,
+                f'Media {classi[1]}': True,
+                'Log2FoldChange': True,
+                '-log10(p-value)': True,
+                'MediaLog': True
+            },
+            color=dati_preparati['MediaLog'] if color_by_media else None,
+            size=dati_preparati['SizeScaled'],
+            color_continuous_scale='RdYlBu_r',
+            size_max=10
+        )
 
         fig.update_layout(
             xaxis=dict(range=[x_min, x_max]),
@@ -88,7 +113,6 @@ def mostra_volcano_plot():
             margin=dict(l=150, r=150, t=200, b=100)
         )
 
-        # **Ripristino delle linee di soglia**
         fig.add_trace(go.Scatter(x=[-fold_change_threshold, -fold_change_threshold], 
                                  y=[0, y_max], 
                                  mode='lines', line=dict(color='red', dash='dash', width=2),
@@ -114,7 +138,6 @@ def mostra_volcano_plot():
     except Exception as e:
         st.error(f"❌ Errore durante la generazione del Volcano Plot: {e}")
 
-    # **Aggiunta della tabella con i criteri di filtraggio originali**
     st.subheader("🔎 Variabili che superano le soglie impostate")
 
     if "-log10(p-value)" in dati_preparati.columns and "Log2FoldChange" in dati_preparati.columns:
