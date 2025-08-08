@@ -1,7 +1,4 @@
-from pathlib import Path
-
-# Contenuto corretto del file differential_analysis.py (senza errori CSS)
-contenuto_corretto = """import streamlit as st
+import streamlit as st
 import pandas as pd
 import re  # 📌 Libreria per rimuovere i suffissi numerici
 
@@ -41,7 +38,7 @@ if file is not None:
         dati, classi_con_duplicate = carica_dati(file)
 
         # **📌 Rimuove i suffissi numerici (.1, .2, .3, ecc.) per evitare classi duplicate**
-        classi_pulite = [re.sub(r'\\.\\d+$', '', classe) for classe in classi_con_duplicate]
+        classi_pulite = [re.sub(r'\.\d+$', '', classe) for classe in classi_con_duplicate]
 
         # **Rimuove eventuali duplicati causati dai suffissi**
         classi_uniche = list(set(classi_pulite))
@@ -83,10 +80,3 @@ if "dati_filtrati" in st.session_state and st.session_state["dati_filtrati"] is 
         mostra_tabella()
 else:
     st.sidebar.info("🔹 Carica un file e seleziona due classi per procedere.")
-"""
-
-# Scrivo il contenuto su file
-file_path = Path("/mnt/data/differential_analysis.py")
-file_path.write_text(contenuto_corretto)
-
-file_path.name
